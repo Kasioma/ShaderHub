@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.11.1",
+    "@radix-ui/react-dialog": "^1.1.6",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.50.0",
     "@trpc/client": "^11.0.0-rc.446",
@@ -22,6 +23,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.39.1",
+    "lucide-react": "^0.482.0",
     "nanoid": "^5.1.2",
     "next": "14.2.16",
     "pg": "^8.13.1",

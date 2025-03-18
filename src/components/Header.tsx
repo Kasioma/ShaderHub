@@ -23,7 +23,7 @@ export default function Header({ user }: Props) {
   const [showProfile, setShowProfile] = useState(false);
 
   return (
-    <header className="sticky bg-background text-text">
+    <header className="sticky bg-background text-text dark">
       <div className="flex items-center justify-between gap-2 p-3 mx-auto">
         <div className="flex items-center gap-2">
           <Image

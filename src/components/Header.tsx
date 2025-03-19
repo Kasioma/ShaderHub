@@ -10,8 +10,6 @@ import { SignInButton, SignOutButton } from "@clerk/nextjs";
 
 type User = {
   id: string;
-  username: string;
-  email: string;
   image: string;
 } | null;
 
@@ -37,10 +35,13 @@ export default function Header({ user }: Props) {
         </div>
         <div className="flex items-center gap-5 relative">
           <SearchBar />
-          <div className="flex items-center gap-2 rounded-md py-1 px-2 hover:cursor-pointer">
+          <Link
+            href="/upload"
+            className="flex items-center gap-2 rounded-md py-1 px-2 hover:cursor-pointer"
+          >
             <Upload />
             <span>Upload</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-2 rounded-md py-1 px-2 hover:cursor-pointer">
             <Box />
             <span>Build</span>
@@ -57,7 +58,15 @@ export default function Header({ user }: Props) {
 
 const ProfilePicture = ({ user }: Props) => {
   if (user === null) return <Person className="w-[40px] h-[40px]" />;
-  return <h1>Profile Picture</h1>;
+  return (
+    <Image
+      src={user.image}
+      alt="Profile Picture"
+      width={40}
+      height={40}
+      className="rounded-full"
+    />
+  );
 };
 
 const Profile = ({ user }: Props) => {
@@ -74,15 +83,11 @@ const Profile = ({ user }: Props) => {
       </Link>
       {user ? (
         <SignOutButton>
-          <button className="w-full p-2 rounded-b-md hover:bg-background-600">
-            Log Out
-          </button>
+          <button className="w-full p-2 rounded-b-md text-left">Log Out</button>
         </SignOutButton>
       ) : (
         <SignInButton>
-          <button className="w-full p-2 rounded-b-md hover:bg-background-600 text-left">
-            Sign In
-          </button>
+          <button className="w-full p-2 rounded-b-md text-left">Sign In</button>
         </SignInButton>
       )}
     </div>

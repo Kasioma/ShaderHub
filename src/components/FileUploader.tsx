@@ -1,28 +1,29 @@
 "use client";
-import { ChangeEventHandler, useEffect, useState } from "react";
+import { ChangeEvent, DragEvent, FormEvent, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 
 export default function FileUploader() {
   const [file, setFile] = useState<File>();
-  const [filename, setFilename] = useState<string>();
+  const [filename, setFilename] = useState<string | null>(null);
+  console.log(filename);
 
-  useEffect(
-    () => () => {
-      if (filename) URL.revokeObjectURL(filename);
-    },
-    [filename]
-  );
-
-  const handleChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
-    if (!target.files) return;
-
-    if (filename) URL.revokeObjectURL(filename);
-
-    const file = target.files[0];
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.dataTransfer) return;
+    const file = e.dataTransfer.files[0];
     setFilename(URL.createObjectURL(file as Blob));
     setFile(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const file = e.target.files[0];
+    setFilename(URL.createObjectURL(file as Blob));
+    setFile(file);
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!file) {
@@ -59,11 +60,26 @@ export default function FileUploader() {
         <input
           id="avatar"
           type="file"
-          onChange={handleChange}
+          accept=".obj,.gltf,.glb,.fbx"
+          onChange={handleSelect}
+          onDrop={handleDrop}
           className="border-border"
         />
         <button>Upload Object</button>
       </form>
+
+      {filename && <CanvasPreview modeUrl={filename} />}
     </div>
   );
 }
+
+const CanvasPreview = ({ modeUrl }: { modeUrl: string }) => {
+  const { scene } = useGLTF(modeUrl);
+
+  return (
+    <Canvas>
+      <ambientLight />
+      <primitive object={scene} />
+    </Canvas>
+  );
+};

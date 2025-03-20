@@ -1,12 +1,11 @@
 "use client";
-import { ChangeEvent, DragEvent, FormEvent, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
+import { useState, DragEvent, ChangeEvent, FormEvent } from "react";
 
 export default function FileUploader() {
   const [file, setFile] = useState<File>();
   const [filename, setFilename] = useState<string | null>(null);
-  console.log(filename);
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -68,18 +67,19 @@ export default function FileUploader() {
         <button>Upload Object</button>
       </form>
 
-      {filename && <CanvasPreview modeUrl={filename} />}
+      <div className="w-full h-screen">
+        <Canvas camera={{ position: [5, 2, 5] }}>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[5, 5, 5]} intensity={1} />
+          <Model />
+          <OrbitControls />
+        </Canvas>
+      </div>
     </div>
   );
 }
 
-const CanvasPreview = ({ modeUrl }: { modeUrl: string }) => {
-  const { scene } = useGLTF(modeUrl);
-
-  return (
-    <Canvas>
-      <ambientLight />
-      <primitive object={scene} />
-    </Canvas>
-  );
-};
+function Model() {
+  const { scene } = useGLTF("/cartoon_car/scene.gltf");
+  return <primitive object={scene} scale={1} />;
+}

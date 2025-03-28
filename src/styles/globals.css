@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --text: #020805;
+    --background: #f0f0f0;
+    --primary: #1e2939;
+    --secondary: #c6d1e1;
+    --accent: #100805;
+  }
+  .dark {
+    --text: #f7fdfa;
+    --background: #0f0f0f;
+    --primary: #c6d1e1;
+    --secondary: #1e2939;
+    --accent: #faf2ef;
+  }
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+html > body {
+  &.no-duration,
+  &.no-duration::before,
+  &.no-duration::after,
+  &.no-duration *,
+  &.no-duration *::before,
+  &.no-duration *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+}

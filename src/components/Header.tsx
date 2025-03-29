@@ -21,7 +21,7 @@ export default function Header({ user }: Props) {
   return (
     <header className="sticky left-0 top-0 bg-background text-text">
       <div className="mx-auto flex items-center justify-between gap-2 p-3">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <Image
             src="/logoDark.png"
             alt="Logo"
@@ -30,7 +30,7 @@ export default function Header({ user }: Props) {
             className="object-contain"
           />
           <h1 className="text-xl font-semibold">ShaderHub</h1>
-        </div>
+        </Link>
         <div className="relative flex items-center gap-5">
           <SearchBar />
           <Link

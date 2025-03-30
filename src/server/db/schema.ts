@@ -1,6 +1,6 @@
 import { type InferSelectModel } from "drizzle-orm";
 import { pgTable, text } from "drizzle-orm/pg-core";
-import { type Visibility } from "@/utilities/lib/types";
+import { type Visibility } from "@/utilities/types";
 
 export const userTable = pgTable("users", {
   id: text("id").primaryKey(),

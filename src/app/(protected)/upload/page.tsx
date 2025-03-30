@@ -6,16 +6,17 @@ import {
   type ChangeEvent,
   type InputHTMLAttributes,
 } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
-import { GLTFLoader } from "three/examples/jsm/Addons.js";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
 import { CircleX, File } from "lucide-react";
+import PreviewModel from "@/components/PreviewModel";
+import type { SupportedLoaders } from "@/utilities/types";
 
 export default function Page() {
   const [loadedFile, setLoadedFile] = useState<string>("");
   const [binary, setBinary] = useState<string>("");
   const [textures, setTextures] = useState<Map<string, string>>(new Map());
+  const [fileType, setFileType] = useState<SupportedLoaders>("unknown");
   const [folderName, setFolderName] = useState<string | undefined>("");
 
   useEffect(() => {
@@ -29,37 +30,53 @@ export default function Page() {
   }, [loadedFile, binary, textures]);
 
   const MemoizedModel = useMemo(
-    () => <Model loadedFile={loadedFile} binary={binary} textures={textures} />,
-    [loadedFile, binary, textures],
+    () => (
+      <PreviewModel
+        fileType={fileType}
+        fileUrl={loadedFile}
+        fileBinary={binary}
+        fileTextures={textures}
+      />
+    ),
+    [loadedFile, binary, textures, fileType],
   );
 
   const handleSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = e.target.files;
     if (!uploadedFiles) return;
     const folder = uploadedFiles[0]!.webkitRelativePath.split("/")[0];
-
+    console.log(folder);
     let loadedFilePath = loadedFile;
     let binaryPath = binary;
     const texturesPath = new Map<string, string>();
+    let fileType: SupportedLoaders = "unknown";
 
     for (const file of uploadedFiles) {
       const blobUrl = URL.createObjectURL(file);
 
-      if (/\.(gltf|glb)$/.test(file.name)) {
+      if (/\.(gltf|glb|obj|fbx)$/.test(file.name)) {
         loadedFilePath = blobUrl;
+        fileType = file.name.split(".").pop() as SupportedLoaders;
       } else if (file.name.endsWith(".bin")) {
         binaryPath = blobUrl;
       } else if (/\.(png|jpg|jpeg)$/.test(file.name)) {
-        texturesPath.set(
-          file.webkitRelativePath.split("/").slice(1).join("/"),
-          blobUrl,
-        );
+        texturesPath.set(file.webkitRelativePath.split("/").pop()!, blobUrl);
       }
     }
+
     setFolderName(folder);
     setLoadedFile(loadedFilePath);
     setBinary(binaryPath);
     setTextures(texturesPath);
+    setFileType(fileType);
+  };
+
+  const clear = () => {
+    setLoadedFile("");
+    setBinary("");
+    setTextures(new Map());
+    setFolderName("");
+    setFileType("unknown");
   };
 
   return (
@@ -96,7 +113,7 @@ export default function Page() {
           {folderName && (
             <div className="mt-3 flex w-full items-center justify-between rounded-md bg-primary p-2 text-secondary">
               <p className="text-sm">{folderName}</p>
-              <CircleX className="h-5 w-5 cursor-pointer" />
+              <CircleX className="h-5 w-5 cursor-pointer" onClick={clear} />
             </div>
           )}
         </div>
@@ -113,36 +130,4 @@ export default function Page() {
       )}
     </div>
   );
-}
-
-function Model({
-  loadedFile,
-  binary,
-  textures,
-}: {
-  loadedFile: string;
-  binary: string;
-  textures: Map<string, string>;
-}) {
-  const manager = new THREE.LoadingManager();
-  manager.setURLModifier((url) => {
-    if (url.endsWith(".bin") && binary) {
-      return binary;
-    }
-
-    const textureFile = url.replace("blob:http://localhost:3000/", "");
-    const texture = textures.get(textureFile);
-    if (
-      texture &&
-      (url.endsWith(".png") || url.endsWith(".jpg") || url.endsWith(".jpeg"))
-    ) {
-      return texture;
-    }
-    return url;
-  });
-
-  const loader = useLoader(GLTFLoader, loadedFile, (loader) => {
-    loader.manager = manager;
-  });
-  return <primitive object={loader.scene} />;
 }

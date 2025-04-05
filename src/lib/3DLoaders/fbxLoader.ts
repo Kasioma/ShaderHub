@@ -1,6 +1,7 @@
 import { useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
+import normalizeModel from "./helper";
 
 export function useFBXLoader({
   fbx,
@@ -22,7 +23,9 @@ export function useFBXLoader({
     return url;
   });
 
-  return useLoader(FBXLoader, fbx, (loader) => {
+  const fbxModel = useLoader(FBXLoader, fbx, (loader) => {
     loader.manager = manager;
   });
+
+  return normalizeModel(fbxModel);
 }

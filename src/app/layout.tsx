@@ -7,6 +7,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeContextProvider } from "@/context/theme";
 import TailwindIndicator from "@/components/TailwindIndicator";
+import { ModalContextProvider } from "@/context/modal";
 
 export const metadata: Metadata = {
   title: "ShaderHub",
@@ -25,12 +26,14 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <ThemeContextProvider>
-        <html lang="en" className={`${geist.variable}`}>
-          <body>
-            <TRPCReactProvider>{children}</TRPCReactProvider>
-            <TailwindIndicator />
-          </body>
-        </html>
+        <ModalContextProvider>
+          <html lang="en" className={`${geist.variable}`}>
+            <body>
+              <TRPCReactProvider>{children}</TRPCReactProvider>
+              <TailwindIndicator />
+            </body>
+          </html>
+        </ModalContextProvider>
       </ThemeContextProvider>
     </ClerkProvider>
   );

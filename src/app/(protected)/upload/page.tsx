@@ -15,7 +15,7 @@ import { useModal } from "@/context/modal";
 import { cn } from "@/utilities/utils";
 
 export default function Page() {
-  const { modal, setModal } = useModal();
+  const { modal } = useModal();
   const [tagView, setTagView] = useState<boolean>(true);
   const [loadedFile, setLoadedFile] = useState<string>("");
   const [binary, setBinary] = useState<string>("");

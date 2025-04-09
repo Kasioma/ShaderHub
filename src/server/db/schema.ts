@@ -69,7 +69,7 @@ export type TagGroupTagRelation = InferSelectModel<
 
 export const attributeTypeTable = pgTable("attribute_types", {
   id: text("id").primaryKey(),
-  name: text("name").notNull().unique()
+  name: text("name").notNull().unique(),
 });
 
 export type AttributeType = InferSelectModel<typeof attributeTypeTable>;

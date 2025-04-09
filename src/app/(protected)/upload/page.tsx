@@ -13,15 +13,21 @@ import PreviewModel from "@/components/PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
 import { useModal } from "@/context/modal";
 import { cn } from "@/utilities/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/utilities/trpc";
 
 export default function Page() {
   const { modal } = useModal();
+  const trpc = useTRPC();
   const [tagView, setTagView] = useState<boolean>(true);
   const [loadedFile, setLoadedFile] = useState<string>("");
   const [binary, setBinary] = useState<string>("");
   const [textures, setTextures] = useState<Map<string, string>>(new Map());
   const [fileType, setFileType] = useState<SupportedLoaders>("unknown");
   const [folderName, setFolderName] = useState<string | undefined>("");
+
+  const tagQuery = useQuery(trpc.upload.queryTagsAndAttributes.queryOptions());
+  console.log(tagQuery.data);
 
   useEffect(() => {
     return () => {

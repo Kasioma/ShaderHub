@@ -8,13 +8,14 @@ import {
 } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { CircleX, File, Search } from "lucide-react";
+import { CircleX, File, Search, Tag } from "lucide-react";
 import PreviewModel from "@/components/PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
 import { useModal } from "@/context/modal";
 import { cn } from "@/utilities/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";
+import type { AttributeType, Tag as TagSchema } from "@/utilities/zod/parsers";
 
 export default function Page() {
   const { modal } = useModal();
@@ -25,9 +26,16 @@ export default function Page() {
   const [textures, setTextures] = useState<Map<string, string>>(new Map());
   const [fileType, setFileType] = useState<SupportedLoaders>("unknown");
   const [folderName, setFolderName] = useState<string | undefined>("");
-
   const tagQuery = useQuery(trpc.upload.queryTagsAndAttributes.queryOptions());
-  console.log(tagQuery.data);
+  const [tags, setTags] = useState<string[]>([]);
+
+  const addNewTag = (tag: string) => {
+    if (tags.length >= 3) return; //toast
+    setTags((prevTags) => [...prevTags, tag]);
+  };
+  const removeTag = (tag: string) => {
+    setTags((prevTags) => prevTags.filter((t) => t !== tag));
+  };
 
   useEffect(() => {
     return () => {
@@ -92,7 +100,7 @@ export default function Page() {
   return (
     <div className="flex h-full p-3">
       <div className="flex h-full w-2/6 flex-col gap-2">
-        <div className="h-5/6 rounded-md border">
+        <div className="flex h-5/6 flex-col justify-between rounded-md border">
           <div className="flex items-center justify-between gap-3 p-3">
             <div className="flex w-full items-center justify-center gap-4">
               <Search className="h-3 w-3" />
@@ -103,7 +111,30 @@ export default function Page() {
               />
             </div>
           </div>
-          {tagView ? tagList() : attributeList()}
+          <div className="flex-1 overflow-y-auto">
+            {tagView ? (
+              tagQuery.isLoading ? (
+                <div className="p-3 text-gray-500">Loading...</div>
+              ) : tagQuery.isError ? (
+                <div className="p-3 text-red-500">Error loading tags</div>
+              ) : tagQuery.data ? (
+                tagView ? (
+                  <TagList
+                    tagQuery={tagQuery.data}
+                    tags={tags}
+                    addNewTag={addNewTag}
+                    removeTag={removeTag}
+                  />
+                ) : (
+                  attributeList()
+                )
+              ) : (
+                <div className="p-3 text-gray-400">No data found</div>
+              )
+            ) : (
+              attributeList()
+            )}
+          </div>
           <div className="flex items-center justify-around gap-3 p-3">
             <button className="rounded-md border px-2 py-1 text-text">
               Upload
@@ -174,8 +205,31 @@ export default function Page() {
   );
 }
 
-function tagList() {
-  return <div className="p-3"></div>;
+type TagListProps = {
+  tagQuery: Map<
+    string,
+    {
+      tag: TagSchema;
+      attributes: AttributeType[];
+    }
+  >;
+  tags: string[];
+  addNewTag: (tag: string) => void;
+  removeTag: (tag: string) => void;
+};
+
+function TagList({ tagQuery, tags, addNewTag, removeTag }: TagListProps) {
+  const entries = Array.from(tagQuery.values());
+  return (
+    <div className="p-3">
+      {entries.map((entry) => (
+        <div key={entry.tag.id}>
+          <Tag />
+          <p>{entry.tag.name}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function attributeList() {

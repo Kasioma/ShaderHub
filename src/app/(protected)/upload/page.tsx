@@ -99,7 +99,7 @@ export default function Page() {
   return (
     <div className="flex h-full p-3">
       <div className="flex h-full w-2/6 flex-col gap-2">
-        <div className="flex h-5/6 flex-col justify-between rounded-md border">
+        <div className="flex flex-grow flex-col justify-between overflow-y-auto rounded-md border">
           <div className="flex items-center justify-between gap-3 p-3">
             <div className="flex w-full items-center justify-center gap-4">
               <Search className="h-3 w-3" />
@@ -151,8 +151,8 @@ export default function Page() {
             )}
           </div>
         </div>
-        <div className="h-2/6 max-h-[170px] rounded-md border border-primary p-2">
-          <div className="flex flex-col items-center justify-center gap-1 text-xl">
+        <div className="min-h-[170px] rounded-md border border-primary p-2">
+          <div className="flex flex-col items-center justify-center gap-1 text-xl text-primary">
             <File className="h-7 w-7" />
             <h2>Drag & Drop a folder here</h2>
           </div>
@@ -266,23 +266,28 @@ function AttributeList({ tagQuery, tags }: AttributeListProps) {
   );
 
   return (
-    <div className="p-3">
-      {entries.map((entry) => {
-        return (
-          <div key={entry.tag.id}>
-            <h2 className="text-lg">{entry.tag.name}</h2>
-            <div className="flex flex-col gap-2">
-              {entry.attributes.map((attribute) => {
-                return (
-                  <div key={attribute.id}>
-                    <h3 className="text-sm">{attribute.name}</h3>
-                  </div>
-                );
-              })}
-            </div>
+    <div className=" p-4">
+      {entries.map((entry) => (
+        <div key={entry.tag.id} className="mb-4">
+          <h2 className="mb-2 text-xl font-semibold italic text-primary">
+            {entry.tag.name}
+          </h2>
+
+          <div className="flex flex-col gap-4">
+            {entry.attributes.map((attribute) => (
+              <div key={attribute.id} className="flex flex-col">
+                <input
+                  id={attribute.id}
+                  name={attribute.name}
+                  type="text"
+                  className="flex items-center justify-center gap-2 rounded-full bg-secondary px-2 py-2 text-sm outline-none"
+                  placeholder={`Enter ${attribute.name.toLowerCase()}`}
+                />
+              </div>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }

@@ -36,7 +36,6 @@ export default function Page() {
   const removeTag = (tag: string) => {
     setTags((prevTags) => prevTags.filter((t) => t !== tag));
   };
-
   useEffect(() => {
     return () => {
       URL.revokeObjectURL(loadedFile);
@@ -112,27 +111,23 @@ export default function Page() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {tagView ? (
-              tagQuery.isLoading ? (
-                <div className="p-3 text-gray-500">Loading...</div>
-              ) : tagQuery.isError ? (
-                <div className="p-3 text-red-500">Error loading tags</div>
-              ) : tagQuery.data ? (
-                tagView ? (
-                  <TagList
-                    tagQuery={tagQuery.data}
-                    tags={tags}
-                    addNewTag={addNewTag}
-                    removeTag={removeTag}
-                  />
-                ) : (
-                  attributeList()
-                )
+            {tagQuery.isLoading ? (
+              <div className="p-3 text-gray-500">Loading...</div>
+            ) : tagQuery.isError ? (
+              <div className="p-3 text-red-500">Error loading tags</div>
+            ) : tagQuery.data ? (
+              tagView ? (
+                <TagList
+                  tagQuery={tagQuery.data}
+                  tags={tags}
+                  addNewTag={addNewTag}
+                  removeTag={removeTag}
+                />
               ) : (
-                <div className="p-3 text-gray-400">No data found</div>
+                <AttributeList tagQuery={tagQuery.data} tags={tags} />
               )
             ) : (
-              attributeList()
+              <div className="p-3 text-gray-400">No data found</div>
             )}
           </div>
           <div className="flex items-center justify-around gap-3 p-3">
@@ -220,18 +215,74 @@ type TagListProps = {
 
 function TagList({ tagQuery, tags, addNewTag, removeTag }: TagListProps) {
   const entries = Array.from(tagQuery.values());
+
+  const handleTagClick = (tagId: string, isChecked: boolean) => {
+    if (isChecked) {
+      removeTag(tagId);
+    } else if (tags.length < 3) {
+      addNewTag(tagId);
+    }
+  };
+
   return (
-    <div className="p-3">
-      {entries.map((entry) => (
-        <div key={entry.tag.id}>
-          <Tag />
-          <p>{entry.tag.name}</p>
-        </div>
-      ))}
+    <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {entries.map((entry) => {
+        const isChecked = tags.includes(entry.tag.id);
+        return (
+          <div
+            key={entry.tag.id}
+            className={
+              "flex min-w-[100px] cursor-pointer select-none items-center justify-center gap-2 rounded-full border py-1"
+            }
+            style={{
+              color: entry.tag.colour,
+              borderColor: isChecked ? entry.tag.colour : "transparent",
+            }}
+            onClick={() => handleTagClick(entry.tag.id, isChecked)}
+          >
+            <Tag style={{ color: entry.tag.colour }} />
+            <span>{entry.tag.name}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function attributeList() {
-  return <>XD</>;
+type AttributeListProps = {
+  tagQuery: Map<
+    string,
+    {
+      tag: TagSchema;
+      attributes: AttributeType[];
+    }
+  >;
+  tags: string[];
+};
+
+function AttributeList({ tagQuery, tags }: AttributeListProps) {
+  const entries = Array.from(tagQuery.values()).filter((entry) =>
+    tags.includes(entry.tag.id),
+  );
+
+  return (
+    <div className="p-3">
+      {entries.map((entry) => {
+        return (
+          <div key={entry.tag.id}>
+            <h2 className="text-lg">{entry.tag.name}</h2>
+            <div className="flex flex-col gap-2">
+              {entry.attributes.map((attribute) => {
+                return (
+                  <div key={attribute.id}>
+                    <h3 className="text-sm">{attribute.name}</h3>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }

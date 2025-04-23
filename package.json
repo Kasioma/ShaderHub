@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.11",
+    "@radix-ui/react-toast": "^1.2.11",
     "@react-three/drei": "^10.0.5",
     "@react-three/fiber": "^9.1.0",
     "@t3-oss/env-nextjs": "^0.12.0",
@@ -30,8 +31,10 @@
     "@trpc/server": "^11.0.0",
     "@trpc/tanstack-react-query": "^11.0.4",
     "@types/three": "^0.174.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.41.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.484.0",
     "next": "^15.2.3",
     "postgres": "^3.4.4",
@@ -47,6 +50,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.0.15",
+    "@types/jszip": "^3.4.1",
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

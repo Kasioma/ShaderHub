@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
   const data = await req.formData();
 
-  const response = await fetch(env.FILESTORAGE_URL + "/object", {
+  const response = await fetch(`${env.FILESTORAGE_URL}/object`, {
     method: "POST",
     body: data,
   });

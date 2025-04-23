@@ -9,6 +9,7 @@ import { ThemeContextProvider } from "@/context/theme";
 import TailwindIndicator from "@/components/TailwindIndicator";
 import { ModalContextProvider } from "@/context/modal";
 import { ClientProvider } from "@/context/clientProvider";
+import { Toaster } from "@/components/toaster/toaster";
 
 export const metadata: Metadata = {
   title: "ShaderHub",
@@ -32,6 +33,7 @@ export default function RootLayout({
             <body>
               <ClientProvider>
                 <TRPCReactProvider>{children}</TRPCReactProvider>
+                <Toaster />
                 <TailwindIndicator />
               </ClientProvider>
             </body>

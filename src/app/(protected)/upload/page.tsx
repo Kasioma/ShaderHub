@@ -12,10 +12,15 @@ import { CircleX, File, Search, Tag } from "lucide-react";
 import PreviewModel from "@/components/PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
 import { useModal } from "@/context/modal";
-import { cn } from "@/utilities/utils";
+import { cn, zipFiles } from "@/utilities/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";
-import type { AttributeType, Tag as TagSchema } from "@/utilities/zod/parsers";
+import {
+  attributeInputSchema,
+  type AttributeType,
+  type Tag as TagSchema,
+} from "@/utilities/zod/parsers";
+import { toast } from "@/components/toaster/use-toast";
 
 export default function Page() {
   const { modal } = useModal();
@@ -28,14 +33,26 @@ export default function Page() {
   const [folderName, setFolderName] = useState<string | undefined>("");
   const tagQuery = useQuery(trpc.upload.queryTagsAndAttributes.queryOptions());
   const [tags, setTags] = useState<string[]>([]);
+  const [attributeInput, setAttributeInput] = useState<Record<string, string>>(
+    {},
+  );
+  const [uploadedFiles, setUploadedFiles] = useState<FileList>();
 
   const addNewTag = (tag: string) => {
-    if (tags.length >= 3) return; //toast
+    if (tags.length >= 3) {
+      return toast({
+        variant: "destructive",
+        title: "Tags Error",
+        description: "Can only select up to three tags!",
+      });
+    }
     setTags((prevTags) => [...prevTags, tag]);
   };
+
   const removeTag = (tag: string) => {
     setTags((prevTags) => prevTags.filter((t) => t !== tag));
   };
+
   useEffect(() => {
     return () => {
       URL.revokeObjectURL(loadedFile);
@@ -62,7 +79,6 @@ export default function Page() {
     const uploadedFiles = e.target.files;
     if (!uploadedFiles) return;
     const folder = uploadedFiles[0]!.webkitRelativePath.split("/")[0];
-    console.log(folder);
     let loadedFilePath = loadedFile;
     let binaryPath = binary;
     const texturesPath = new Map<string, string>();
@@ -86,6 +102,7 @@ export default function Page() {
     setBinary(binaryPath);
     setTextures(texturesPath);
     setFileType(fileType);
+    setUploadedFiles(uploadedFiles);
   };
 
   const clear = () => {
@@ -94,6 +111,28 @@ export default function Page() {
     setTextures(new Map());
     setFolderName("");
     setFileType("unknown");
+    setTags([]);
+    setAttributeInput({});
+    setUploadedFiles(undefined);
+  };
+
+  const handleUpload = async () => {
+    if (uploadedFiles && tags.length > 0) {
+      const blob = await zipFiles(uploadedFiles);
+      console.log(blob);
+    } else if (!uploadedFiles) {
+      toast({
+        variant: "destructive",
+        title: "Please select your model",
+        description: "You need to select a model to upload",
+      });
+    } else if (tags.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Please select tags",
+        description: "You need to select at least one tag",
+      });
+    }
   };
 
   return (
@@ -124,14 +163,22 @@ export default function Page() {
                   removeTag={removeTag}
                 />
               ) : (
-                <AttributeList tagQuery={tagQuery.data} tags={tags} />
+                <AttributeList
+                  tagQuery={tagQuery.data}
+                  tags={tags}
+                  attributeInput={attributeInput}
+                  setAttributeInput={setAttributeInput}
+                />
               )
             ) : (
               <div className="p-3 text-gray-400">No data found</div>
             )}
           </div>
           <div className="flex items-center justify-around gap-3 p-3">
-            <button className="rounded-md border px-2 py-1 text-text">
+            <button
+              className="rounded-md border px-2 py-1 text-text"
+              onClick={handleUpload}
+            >
               Upload
             </button>
             {tagView ? (
@@ -219,7 +266,7 @@ function TagList({ tagQuery, tags, addNewTag, removeTag }: TagListProps) {
   const handleTagClick = (tagId: string, isChecked: boolean) => {
     if (isChecked) {
       removeTag(tagId);
-    } else if (tags.length < 3) {
+    } else {
       addNewTag(tagId);
     }
   };
@@ -258,9 +305,35 @@ type AttributeListProps = {
     }
   >;
   tags: string[];
+  attributeInput: Record<string, string>;
+  setAttributeInput: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
+  >;
 };
 
-function AttributeList({ tagQuery, tags }: AttributeListProps) {
+function AttributeList({
+  tagQuery,
+  tags,
+  attributeInput,
+  setAttributeInput,
+}: AttributeListProps) {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    const lower = value.toLowerCase();
+    setAttributeInput((prev) => ({ ...prev, [id]: lower }));
+  };
+
+  const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id } = e.target;
+    const result = attributeInputSchema.safeParse(attributeInput[id]);
+    setErrors((prev) => ({
+      ...prev,
+      [id]: result.success ? "" : result.error.errors[0]!.message,
+    }));
+  };
+
   const entries = Array.from(tagQuery.values()).filter((entry) =>
     tags.includes(entry.tag.id),
   );
@@ -275,14 +348,26 @@ function AttributeList({ tagQuery, tags }: AttributeListProps) {
 
           <div className="flex flex-col gap-4">
             {entry.attributes.map((attribute) => (
-              <div key={attribute.id} className="flex flex-col">
+              <div key={entry.tag.id + attribute.id} className="flex flex-col">
                 <input
-                  id={attribute.id}
-                  name={attribute.name}
+                  id={entry.tag.id + attribute.id}
+                  name={entry.tag.name + attribute.name}
                   type="text"
-                  className="flex items-center justify-center gap-2 rounded-full bg-secondary px-2 py-2 text-sm outline-none"
+                  className={`flex items-center justify-center gap-2 rounded-full bg-secondary px-2 py-2 text-sm outline-none ${
+                    errors[entry.tag.id + attribute.id]
+                      ? "border border-red-500"
+                      : ""
+                  }`}
+                  value={attributeInput[entry.tag.id + attribute.id] ?? ""}
+                  onChange={(e) => handleChange(e)}
+                  onBlur={(e) => handleBlur(e)}
                   placeholder={`Enter ${attribute.name.toLowerCase()}`}
                 />
+                {errors[entry.tag.id + attribute.id] && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors[entry.tag.id + attribute.id]}
+                  </p>
+                )}
               </div>
             ))}
           </div>

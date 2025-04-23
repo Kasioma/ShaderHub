@@ -24,3 +24,10 @@ export const attributeTypeSchema = z.object({
 
 export type AttributeType = z.infer<typeof attributeTypeSchema>;
 
+export const attributeInputSchema = z
+  .string()
+  .max(100)
+  .regex(/^[a-z\s]*$/, {
+    message: "Only lowercase letters and spaces are allowed",
+  })
+  .optional();

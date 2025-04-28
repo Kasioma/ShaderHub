@@ -31,3 +31,11 @@ export const attributeInputSchema = z
     message: "Only lowercase letters and spaces are allowed",
   })
   .optional();
+
+export const uploadObjectSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  metadata: z.record(z.record(z.string())),
+});
+
+export type UploadObject = z.infer<typeof uploadObjectSchema>;

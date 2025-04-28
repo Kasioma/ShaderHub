@@ -13,7 +13,7 @@ import PreviewModel from "@/components/PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
 import { useModal } from "@/context/modal";
 import { cn, zipFiles } from "@/utilities/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";
 import {
   attributeInputSchema,
@@ -33,10 +33,27 @@ export default function Page() {
   const [folderName, setFolderName] = useState<string | undefined>("");
   const tagQuery = useQuery(trpc.upload.queryTagsAndAttributes.queryOptions());
   const [tags, setTags] = useState<string[]>([]);
-  const [attributeInput, setAttributeInput] = useState<Record<string, string>>(
-    {},
-  );
+  const [attributeInput, setAttributeInput] = useState<
+    Record<string, Record<string, string>>
+  >({});
   const [uploadedFiles, setUploadedFiles] = useState<FileList>();
+
+  const mutationOptions = {
+    onError(error: { message: string }) {
+      toast({
+        variant: "destructive",
+        title: "Server error",
+        description: error.message,
+      });
+    },
+    onSuccess() {
+      clear();
+    },
+  };
+
+  const uploadMutation = useMutation(
+    trpc.upload.uploadObject.mutationOptions(mutationOptions),
+  );
 
   const addNewTag = (tag: string) => {
     if (tags.length >= 3) {
@@ -118,8 +135,27 @@ export default function Page() {
 
   const handleUpload = async () => {
     if (uploadedFiles && tags.length > 0) {
+      const formData = new FormData();
       const blob = await zipFiles(uploadedFiles);
-      console.log(blob);
+      formData.append("file", blob);
+      const metaData = {
+        id: "",
+        name: loadedFile,
+        metadata: attributeInput,
+      };
+      const response = await fetch("/api/filestorage/object/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Your model has been uploaded",
+        });
+        const { id } = (await response.json()) as { id: string };
+        metaData.id = id;
+        uploadMutation.mutate(metaData);
+      }
     } else if (!uploadedFiles) {
       toast({
         variant: "destructive",
@@ -305,9 +341,9 @@ type AttributeListProps = {
     }
   >;
   tags: string[];
-  attributeInput: Record<string, string>;
+  attributeInput: Record<string, Record<string, string>>;
   setAttributeInput: React.Dispatch<
-    React.SetStateAction<Record<string, string>>
+    React.SetStateAction<Record<string, Record<string, string>>>
   >;
 };
 
@@ -322,7 +358,17 @@ function AttributeList({
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     const lower = value.toLowerCase();
-    setAttributeInput((prev) => ({ ...prev, [id]: lower }));
+    const [rawTagId, rawAttributeId] = id.split("/");
+    const tagId = String(rawTagId ?? "");
+    const attributeId = String(rawAttributeId ?? "");
+
+    setAttributeInput((prev) => ({
+      ...prev,
+      [tagId]: {
+        ...(prev[tagId] ?? {}),
+        [attributeId]: lower,
+      },
+    }));
   };
 
   const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
@@ -348,24 +394,27 @@ function AttributeList({
 
           <div className="flex flex-col gap-4">
             {entry.attributes.map((attribute) => (
-              <div key={entry.tag.id + attribute.id} className="flex flex-col">
+              <div
+                key={entry.tag.id + "/" + attribute.id}
+                className="flex flex-col"
+              >
                 <input
-                  id={entry.tag.id + attribute.id}
-                  name={entry.tag.name + attribute.name}
+                  id={entry.tag.id + "/" + attribute.id}
+                  name={entry.tag.name + "/" + attribute.name}
                   type="text"
                   className={`flex items-center justify-center gap-2 rounded-full bg-secondary px-2 py-2 text-sm outline-none ${
-                    errors[entry.tag.id + attribute.id]
+                    errors[entry.tag.id + "/" + attribute.id]
                       ? "border border-red-500"
                       : ""
                   }`}
-                  value={attributeInput[entry.tag.id + attribute.id] ?? ""}
+                  value={attributeInput?.[entry.tag.id]?.[attribute.id] ?? ""}
                   onChange={(e) => handleChange(e)}
                   onBlur={(e) => handleBlur(e)}
                   placeholder={`Enter ${attribute.name.toLowerCase()}`}
                 />
-                {errors[entry.tag.id + attribute.id] && (
+                {errors[entry.tag.id + "/" + attribute.id] && (
                   <p className="mt-1 text-sm text-red-500">
-                    {errors[entry.tag.id + attribute.id]}
+                    {errors[entry.tag.id + "/" + attribute.id]}
                   </p>
                 )}
               </div>

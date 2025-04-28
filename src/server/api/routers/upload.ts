@@ -9,6 +9,7 @@ import {
 } from "@/server/db/schema";
 import { eq, or, and } from "drizzle-orm";
 import { z } from "zod";
+import { uploadObjectSchema } from "@/utilities/zod/parsers";
 
 async function isSignedIn() {
   const { sessionClaims } = await auth();
@@ -81,4 +82,28 @@ export const uploadRouter = createTRPCRouter({
       });
     }
   }),
+  uploadObject: publicProcedure
+    .input(uploadObjectSchema)
+    .mutation(async ({ input }) => {
+      const userId = await isSignedIn();
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be signed in to use this route.",
+        });
+      }
+      try {
+        const parsedUserId = z.string().parse(userId);
+        console.log(input);
+        console.log(parsedUserId);
+        try {
+          
+        } catch {}
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Mutation couldn't be performed.",
+        });
+      }
+    }),
 });

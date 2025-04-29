@@ -6,10 +6,15 @@ import {
   attributeTypeTable,
   tagTable,
   attributeTypeTagRelationTable,
+  objectTable,
+  objectTagRelationTable,
+  attributeValueTable,
+  attributeValueObjectRelationTable,
 } from "@/server/db/schema";
 import { eq, or, and } from "drizzle-orm";
 import { z } from "zod";
 import { uploadObjectSchema } from "@/utilities/zod/parsers";
+import { nanoid } from "nanoid";
 
 async function isSignedIn() {
   const { sessionClaims } = await auth();
@@ -93,12 +98,40 @@ export const uploadRouter = createTRPCRouter({
         });
       }
       try {
-        const parsedUserId = z.string().parse(userId);
-        console.log(input);
-        console.log(parsedUserId);
-        try {
-          
-        } catch {}
+        await db.transaction(async (tx) => {
+          const parsedUserId = z.string().parse(userId);
+
+          const tagRows = Object.keys(input.metadata).map((tagId) => ({
+            tagId,
+            objectId: input.id,
+          }));
+
+          const attributeRows = Object.entries(input.metadata).flatMap(
+            ([tagId, tagAttributes]) =>
+              Object.entries(tagAttributes).map(([attributeId, value]) => ({
+                id: nanoid(15),
+                attributeTypeId: attributeId,
+                value,
+              })),
+          );
+
+          const attributeObjectRows = attributeRows.map((attributeRow) => ({
+            objectId: input.id,
+            attributeId: attributeRow.id,
+          }));
+
+          await tx.insert(objectTable).values({
+            id: input.id,
+            name: input.name,
+            userId: parsedUserId,
+          });
+
+          await tx.insert(objectTagRelationTable).values(tagRows);
+          await tx.insert(attributeValueTable).values(attributeRows);
+          await tx
+            .insert(attributeValueObjectRelationTable)
+            .values(attributeObjectRows);
+        });
       } catch {
         throw new TRPCError({
           code: "BAD_REQUEST",

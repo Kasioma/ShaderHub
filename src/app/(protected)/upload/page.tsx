@@ -134,13 +134,13 @@ export default function Page() {
   };
 
   const handleUpload = async () => {
-    if (uploadedFiles && tags.length > 0) {
+    if (folderName && uploadedFiles && tags.length > 0) {
       const formData = new FormData();
       const blob = await zipFiles(uploadedFiles);
       formData.append("file", blob);
       const metaData = {
         id: "",
-        name: loadedFile,
+        name: folderName,
         metadata: attributeInput,
       };
       const response = await fetch("/api/filestorage/object/upload", {

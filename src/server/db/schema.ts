@@ -11,7 +11,7 @@ export type User = InferSelectModel<typeof userTable>;
 
 export const objectTable = pgTable("objects", {
   id: text("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   visibility: text("visibility")
     .notNull()
     .$type<Visibility>()

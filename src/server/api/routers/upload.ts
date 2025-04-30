@@ -132,10 +132,13 @@ export const uploadRouter = createTRPCRouter({
             .insert(attributeValueObjectRelationTable)
             .values(attributeObjectRows);
         });
-      } catch {
+      } catch (err) {
+        console.error("Error during object mutation:", err);
+
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Mutation couldn't be performed.",
+          message: `Mutation failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+          cause: err instanceof Error ? err : undefined,
         });
       }
     }),

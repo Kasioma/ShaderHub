@@ -2,6 +2,7 @@ import { HydrateClient } from "@/trpc/server";
 import Header from "@/components/Header";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import ObjectGrid from "@/components/ObjectGrid";
 
 type User = {
   id: string;
@@ -28,6 +29,7 @@ export default async function Home() {
         <SignedIn>
           <Header user={await getUserData()} />
         </SignedIn>
+        <ObjectGrid />
       </main>
     </HydrateClient>
   );

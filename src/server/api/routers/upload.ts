@@ -107,7 +107,7 @@ export const uploadRouter = createTRPCRouter({
           }));
 
           const attributeRows = Object.entries(input.metadata).flatMap(
-            ([tagId, tagAttributes]) =>
+            ([, tagAttributes]) =>
               Object.entries(tagAttributes).map(([attributeId, value]) => ({
                 id: nanoid(15),
                 attributeTypeId: attributeId,

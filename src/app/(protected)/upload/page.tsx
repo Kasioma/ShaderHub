@@ -21,6 +21,8 @@ import {
   type Tag as TagSchema,
 } from "@/utilities/zod/parsers";
 import { toast } from "@/components/toaster/use-toast";
+import { PerspectiveCamera } from "@react-three/drei";
+import ThumbnailGenerator from "@/components/ThumbnailGenerator";
 
 export default function Page() {
   const { modal } = useModal();
@@ -156,6 +158,7 @@ export default function Page() {
         metaData.id = id;
         uploadMutation.mutate(metaData);
       }
+      clear();
     } else if (!uploadedFiles) {
       toast({
         variant: "destructive",
@@ -169,6 +172,10 @@ export default function Page() {
         description: "You need to select at least one tag",
       });
     }
+  };
+
+  const handleThumbnail = (dataUrl: string) => {
+    console.log(dataUrl);
   };
 
   return (
@@ -274,10 +281,20 @@ export default function Page() {
           <Canvas className="h-full w-full">
             <directionalLight position={[5, 5, 5]} intensity={1} />
             <ambientLight intensity={0.5} />
+            <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={45} />
             {MemoizedModel}
             <OrbitControls />
           </Canvas>
         </div>
+      )}
+      {loadedFile && (
+        <ThumbnailGenerator
+          fileType={fileType}
+          fileUrl={loadedFile}
+          fileBinary={binary}
+          fileTextures={textures}
+          onSnapshot={handleThumbnail}
+        />
       )}
     </div>
   );

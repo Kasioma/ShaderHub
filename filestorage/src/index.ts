@@ -14,6 +14,12 @@ const __dirname = path.dirname(__filename);
 const STATIC_PATH = path.join(__dirname, "..", "static");
 const STATIC_PATH_PICTURES = path.join(__dirname, "..", "static", "pictures");
 const STATIC_PATH_OBJECTS = path.join(__dirname, "..", "static", "files");
+const STATIC_PATH_THUMBNAILS = path.join(
+  __dirname,
+  "..",
+  "static",
+  "thumbnails",
+);
 
 const app = new Hono();
 app.use(logger());
@@ -42,7 +48,9 @@ app.post("/object", async (c) => {
   const data = await c.req.formData();
   const blob = data.get("file") as Blob;
   const id = data.get("objectId") as string;
-  const buffer = Buffer.from(await blob.arrayBuffer());
+  const thumbnail = data.get("thumbnail") as Blob;
+  const objectBuffer = Buffer.from(await blob.arrayBuffer());
+  const thumbnailBuffer = Buffer.from(await thumbnail.arrayBuffer());
 
   if (!fs.existsSync(STATIC_PATH)) {
     fs.mkdirSync(STATIC_PATH, { recursive: true });
@@ -52,9 +60,23 @@ app.post("/object", async (c) => {
     fs.mkdirSync(STATIC_PATH_OBJECTS, { recursive: true });
   }
 
-  fs.writeFileSync(path.join(STATIC_PATH_OBJECTS, id), buffer);
+  if (!fs.existsSync(STATIC_PATH_THUMBNAILS)) {
+    fs.mkdirSync(STATIC_PATH_THUMBNAILS, { recursive: true });
+  }
 
-  return c.json({ id });
+  try {
+    fs.writeFileSync(path.join(STATIC_PATH_OBJECTS, id), objectBuffer);
+    fs.writeFileSync(path.join(STATIC_PATH_THUMBNAILS, id), thumbnailBuffer);
+  } catch {
+    try {
+      fs.unlinkSync(path.join(STATIC_PATH_OBJECTS, id));
+    } catch {
+      return c.json({ error: "Failed to upload thumbnail" }, 500);
+    }
+    return c.json({ error: "Failed to upload object" }, 500);
+  }
+
+  return c.json({ success: true }, 200);
 });
 
 app.delete("/pictures/:id", async (c) => {

@@ -17,3 +17,19 @@ export const zipFiles = async (files: FileList) => {
   const blob = await zip.generateAsync({ type: "blob" });
   return blob;
 };
+
+export const dataURLtoBlob = (dataUrl: string): Blob => {
+  const parts = dataUrl.split(",");
+  const regex = /:(.*?);/;
+  const match = regex.exec(parts[0]!);
+  const mime = match ? match[1] : "image/png";
+  const byteString = atob(parts[1]!);
+  const arrayBuffer = new ArrayBuffer(byteString.length);
+  const uint8Array = new Uint8Array(arrayBuffer);
+
+  for (let i = 0; i < byteString.length; i++) {
+    uint8Array[i] = byteString.charCodeAt(i);
+  }
+
+  return new Blob([uint8Array], { type: mime });
+};

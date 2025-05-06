@@ -102,12 +102,12 @@ export const uploadRouter = createTRPCRouter({
         await db.transaction(async (tx) => {
           const parsedUserId = z.string().parse(userId);
 
-          const tagRows = Object.keys(input.metadata).map((tagId) => ({
+          const tagRows = input.tags.map((tagId) => ({
             tagId,
             objectId: objectId,
           }));
 
-          const attributeRows = Object.entries(input.metadata).flatMap(
+          const attributeRows = Object.entries(input.attributes).flatMap(
             ([, tagAttributes]) =>
               Object.entries(tagAttributes).map(([attributeId, value]) => ({
                 id: nanoid(15),
@@ -128,10 +128,12 @@ export const uploadRouter = createTRPCRouter({
           });
 
           await tx.insert(objectTagRelationTable).values(tagRows);
-          await tx.insert(attributeValueTable).values(attributeRows);
-          await tx
-            .insert(attributeValueObjectRelationTable)
-            .values(attributeObjectRows);
+          if (attributeRows.length > 0)
+            await tx.insert(attributeValueTable).values(attributeRows);
+          if (attributeObjectRows.length > 0)
+            await tx
+              .insert(attributeValueObjectRelationTable)
+              .values(attributeObjectRows);
         });
         return objectId;
       } catch (err) {

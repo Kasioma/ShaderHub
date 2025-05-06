@@ -34,7 +34,8 @@ export const attributeInputSchema = z
 
 export const uploadObjectSchema = z.object({
   name: z.string(),
-  metadata: z.record(z.record(z.string())),
+  tags: z.array(z.string()),
+  attributes: z.record(z.record(z.string())),
 });
 
 export type UploadObject = z.infer<typeof uploadObjectSchema>;

@@ -12,7 +12,7 @@ import { CircleX, File, Search, Tag } from "lucide-react";
 import PreviewModel from "@/components/PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
 import { useModal } from "@/context/modal";
-import { cn, zipFiles } from "@/utilities/utils";
+import { cn, zipFiles, dataURLtoBlob } from "@/utilities/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";
 import {
@@ -39,6 +39,7 @@ export default function Page() {
     Record<string, Record<string, string>>
   >({});
   const [uploadedFiles, setUploadedFiles] = useState<FileList>();
+  const [thumbnail, setThumbnail] = useState<Blob>();
 
   const mutationOptions = {
     onError(error: { message: string }) {
@@ -133,6 +134,7 @@ export default function Page() {
     setTags([]);
     setAttributeInput({});
     setUploadedFiles(undefined);
+    setThumbnail(undefined);
   };
 
   const handleUpload = async () => {
@@ -158,19 +160,21 @@ export default function Page() {
     try {
       const objectId = await uploadMutation.mutateAsync({
         name: folderName,
-        metadata: attributeInput,
+        tags: tags,
+        attributes: attributeInput,
       });
 
       const blob = await zipFiles(uploadedFiles);
       formData.append("file", blob);
       formData.append("objectId", objectId);
+      if (thumbnail) formData.append("thumbnail", thumbnail);
       const result = await fetch("/api/filestorage/object/upload", {
         method: "POST",
         body: formData,
       });
 
       if (!result.ok) {
-        throw new Error("Upload failed");
+        throw new Error();
       }
 
       clear();
@@ -184,7 +188,7 @@ export default function Page() {
   };
 
   const handleThumbnail = (dataUrl: string) => {
-    console.log(dataUrl);
+    setThumbnail(dataURLtoBlob(dataUrl));
   };
 
   return (

@@ -24,10 +24,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(null, { status: response.status });
   }
 
-  const json = (await response.json()) as { id: string };
-
   try {
-    return NextResponse.json(json);
+    return NextResponse.json(null, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json(null, { status: 500 });

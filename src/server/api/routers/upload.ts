@@ -97,13 +97,14 @@ export const uploadRouter = createTRPCRouter({
           message: "You must be signed in to use this route.",
         });
       }
+      const objectId = nanoid(15);
       try {
         await db.transaction(async (tx) => {
           const parsedUserId = z.string().parse(userId);
 
           const tagRows = Object.keys(input.metadata).map((tagId) => ({
             tagId,
-            objectId: input.id,
+            objectId: objectId,
           }));
 
           const attributeRows = Object.entries(input.metadata).flatMap(
@@ -116,12 +117,12 @@ export const uploadRouter = createTRPCRouter({
           );
 
           const attributeObjectRows = attributeRows.map((attributeRow) => ({
-            objectId: input.id,
+            objectId: objectId,
             attributeId: attributeRow.id,
           }));
 
           await tx.insert(objectTable).values({
-            id: input.id,
+            id: objectId,
             name: input.name,
             userId: parsedUserId,
           });
@@ -132,6 +133,7 @@ export const uploadRouter = createTRPCRouter({
             .insert(attributeValueObjectRelationTable)
             .values(attributeObjectRows);
         });
+        return objectId;
       } catch (err) {
         console.error("Error during object mutation:", err);
 

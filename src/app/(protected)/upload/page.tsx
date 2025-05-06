@@ -136,40 +136,49 @@ export default function Page() {
   };
 
   const handleUpload = async () => {
-    if (folderName && uploadedFiles && tags.length > 0) {
-      const formData = new FormData();
-      const blob = await zipFiles(uploadedFiles);
-      formData.append("file", blob);
-      const metaData = {
-        id: "",
-        name: folderName,
-        metadata: attributeInput,
-      };
-      const response = await fetch("/api/filestorage/object/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Your model has been uploaded",
-        });
-        const { id } = (await response.json()) as { id: string };
-        metaData.id = id;
-        uploadMutation.mutate(metaData);
-      }
-      clear();
-    } else if (!uploadedFiles) {
-      toast({
+    if (!uploadedFiles) {
+      return toast({
         variant: "destructive",
         title: "Please select your model",
         description: "You need to select a model to upload",
       });
-    } else if (tags.length === 0) {
-      toast({
+    }
+
+    if (tags.length === 0) {
+      return toast({
         variant: "destructive",
         title: "Please select tags",
         description: "You need to select at least one tag",
+      });
+    }
+
+    if (!folderName) return;
+
+    const formData = new FormData();
+    try {
+      const objectId = await uploadMutation.mutateAsync({
+        name: folderName,
+        metadata: attributeInput,
+      });
+
+      const blob = await zipFiles(uploadedFiles);
+      formData.append("file", blob);
+      formData.append("objectId", objectId);
+      const result = await fetch("/api/filestorage/object/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!result.ok) {
+        throw new Error("Upload failed");
+      }
+
+      clear();
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "Upload failed, please try again",
       });
     }
   };

@@ -33,7 +33,6 @@ export const attributeInputSchema = z
   .optional();
 
 export const uploadObjectSchema = z.object({
-  id: z.string(),
   name: z.string(),
   metadata: z.record(z.record(z.string())),
 });

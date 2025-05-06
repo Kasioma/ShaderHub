@@ -41,8 +41,8 @@ app.post("/picture", async (c) => {
 app.post("/object", async (c) => {
   const data = await c.req.formData();
   const blob = data.get("file") as Blob;
+  const id = data.get("objectId") as string;
   const buffer = Buffer.from(await blob.arrayBuffer());
-  const id = nanoid(15);
 
   if (!fs.existsSync(STATIC_PATH)) {
     fs.mkdirSync(STATIC_PATH, { recursive: true });

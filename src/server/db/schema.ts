@@ -1,5 +1,5 @@
 import { type InferSelectModel } from "drizzle-orm";
-import { pgTable, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, text } from "drizzle-orm/pg-core";
 import { type Visibility } from "@/utilities/types";
 
 export const userTable = pgTable("users", {
@@ -19,6 +19,7 @@ export const objectTable = pgTable("objects", {
   userId: text("user_id")
     .notNull()
     .references(() => userTable.id, { onDelete: "cascade" }),
+  createdAt: integer("created_at").notNull(),
 });
 
 export type Object = InferSelectModel<typeof objectTable>;

@@ -101,6 +101,22 @@ app.delete("/objects/:id", async (c) => {
   return c.body("", 200);
 });
 
+app.post("/thumbnails", async (c) => {
+  const data = await c.req.formData();
+  const thumbnails = data.getAll("thumbnails") as string[];
+
+  if (!fs.existsSync(STATIC_PATH_THUMBNAILS)) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  for (const thumbnail of thumbnails) {
+    const filePath = path.join(STATIC_PATH_THUMBNAILS, thumbnail);
+    if (!fs.existsSync(filePath)) return c.json({ error: "Not found" }, 404);
+  }
+
+  return c.json({ success: true }, 200);
+});
+
 serve({
   fetch: app.fetch,
   port: 3001,

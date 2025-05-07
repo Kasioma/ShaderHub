@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
@@ -15,8 +14,9 @@ import { eq, or, and } from "drizzle-orm";
 import { z } from "zod";
 import { uploadObjectSchema } from "@/utilities/zod/parsers";
 import { nanoid } from "nanoid";
+import { auth } from "@clerk/nextjs/server";
 
-async function isSignedIn() {
+export async function isSignedIn() {
   const { sessionClaims } = await auth();
   if (!sessionClaims) return null;
   return sessionClaims.id;
@@ -125,6 +125,7 @@ export const uploadRouter = createTRPCRouter({
             id: objectId,
             name: input.name,
             userId: parsedUserId,
+            createdAt: Math.floor(Date.now() / 1000),
           });
 
           await tx.insert(objectTagRelationTable).values(tagRows);

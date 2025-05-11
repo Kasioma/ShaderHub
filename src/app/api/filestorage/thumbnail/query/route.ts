@@ -1,4 +1,5 @@
 import { env } from "@/env";
+import JSZip from "jszip";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -20,8 +21,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(null, { status: response.status });
   }
 
+  const zipBuffer = await response.arrayBuffer();
   try {
-    return NextResponse.json(null, { status: 200 });
+    return new NextResponse(zipBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": "attachment; filename=thumbnails.zip",
+      },
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json(null, { status: 500 });

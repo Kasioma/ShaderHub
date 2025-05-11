@@ -22,7 +22,7 @@ import {
 } from "@/utilities/zod/parsers";
 import { toast } from "@/components/toaster/use-toast";
 import { PerspectiveCamera } from "@react-three/drei";
-import ThumbnailGenerator from "@/components/ThumbnailGenerator";
+import SnapshotHandler from "@/components/SnapshotHandler";
 
 export default function Page() {
   const { modal } = useModal();
@@ -39,7 +39,8 @@ export default function Page() {
     Record<string, Record<string, string>>
   >({});
   const [uploadedFiles, setUploadedFiles] = useState<FileList>();
-  const [thumbnail, setThumbnail] = useState<Blob>();
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const [thumbnail, setThumbnail] = useState<string>();
 
   const mutationOptions = {
     onError(error: { message: string }) {
@@ -90,6 +91,7 @@ export default function Page() {
         fileUrl={loadedFile}
         fileBinary={binary}
         fileTextures={textures}
+        onLoaded={() => setModelLoaded(true)}
       />
     ),
     [loadedFile, binary, textures, fileType],
@@ -167,7 +169,10 @@ export default function Page() {
       const blob = await zipFiles(uploadedFiles);
       formData.append("file", blob);
       formData.append("objectId", objectId);
-      if (thumbnail) formData.append("thumbnail", thumbnail);
+      if (thumbnail) {
+        const thumbnailBlob = dataURLtoBlob(thumbnail);
+        formData.append("thumbnail", thumbnailBlob);
+      }
       const result = await fetch("/api/filestorage/object/upload", {
         method: "POST",
         body: formData,
@@ -185,10 +190,6 @@ export default function Page() {
         description: "Upload failed, please try again",
       });
     }
-  };
-
-  const handleThumbnail = (dataUrl: string) => {
-    setThumbnail(dataURLtoBlob(dataUrl));
   };
 
   return (
@@ -291,23 +292,21 @@ export default function Page() {
       </div>
       {loadedFile && (
         <div className={cn("relative h-full w-4/6", { "-z-10": modal })}>
-          <Canvas className="h-full w-full">
+          <Canvas
+            gl={{ preserveDrawingBuffer: true }}
+            className="h-full w-full"
+          >
             <directionalLight position={[5, 5, 5]} intensity={1} />
             <ambientLight intensity={0.5} />
             <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={45} />
             {MemoizedModel}
-            <OrbitControls />
+            <OrbitControls target0={[0, 0, 0]} />
+            <SnapshotHandler
+              modelLoaded={modelLoaded}
+              onCapture={setThumbnail}
+            />
           </Canvas>
         </div>
-      )}
-      {loadedFile && (
-        <ThumbnailGenerator
-          fileType={fileType}
-          fileUrl={loadedFile}
-          fileBinary={binary}
-          fileTextures={textures}
-          onSnapshot={handleThumbnail}
-        />
       )}
     </div>
   );

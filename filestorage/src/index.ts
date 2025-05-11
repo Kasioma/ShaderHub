@@ -7,6 +7,9 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { logger } from "hono/logger";
 import { nanoid } from "nanoid";
 import { serve } from "@hono/node-server";
+import archiver from "archiver";
+import type { Archiver } from "archiver";
+import { PassThrough, Readable } from "stream";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -103,18 +106,35 @@ app.delete("/objects/:id", async (c) => {
 
 app.post("/thumbnails", async (c) => {
   const data = await c.req.formData();
-  const thumbnails = data.getAll("thumbnails") as string[];
+  const thumbnails = data.getAll("thumbnails");
 
   if (!fs.existsSync(STATIC_PATH_THUMBNAILS)) {
-    return c.json({ error: "Not found" }, 404);
+    return c.json({ error: "Thumbnails folder not found" }, 404);
   }
 
-  for (const thumbnail of thumbnails) {
-    const filePath = path.join(STATIC_PATH_THUMBNAILS, thumbnail);
-    if (!fs.existsSync(filePath)) return c.json({ error: "Not found" }, 404);
+  const archive = archiver("zip", { zlib: { level: 9 } });
+  const stream = new PassThrough();
+
+  archive.pipe(stream);
+
+  for (const thumb of thumbnails) {
+    const name = typeof thumb === "string" ? thumb : thumb.name;
+    const filePath = path.join(STATIC_PATH_THUMBNAILS, name);
+    if (!fs.existsSync(filePath)) {
+      archive.append(`File ${name} not found`, { name: `ERROR_${name}.txt` });
+    } else {
+      archive.file(filePath, { name });
+    }
   }
 
-  return c.json({ success: true }, 200);
+  await archive.finalize();
+
+  return new Response(stream as unknown as BodyInit, {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": "attachment; filename=thumbnails.zip",
+    },
+  });
 });
 
 serve({

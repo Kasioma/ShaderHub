@@ -39,3 +39,10 @@ export const uploadObjectSchema = z.object({
 });
 
 export type UploadObject = z.infer<typeof uploadObjectSchema>;
+
+const ThumbnailObjectSchema = z.object({
+  id: z.string(),
+  url: z.string().url(),
+});
+
+export const ThumbnailsResponseSchema = z.array(ThumbnailObjectSchema);

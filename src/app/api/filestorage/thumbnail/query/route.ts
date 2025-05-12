@@ -1,5 +1,4 @@
 import { env } from "@/env";
-import JSZip from "jszip";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

@@ -1,16 +1,16 @@
 "use client";
 
 import { useTRPC } from "@/utilities/trpc";
-import { ThumbnailsResponseSchema } from "@/utilities/zod/parsers";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import type { Direction } from "@/utilities/types";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import JSZip from "jszip";
+import { useEffect, useState } from "react";
 
-type MetadataObject = {
+type ObjectType = {
   id: string;
   name: string;
   userId: string;
+  createdAt: number;
 };
 
 type ThumbnailObject = {
@@ -21,20 +21,52 @@ type ThumbnailObject = {
 export default function ObjectGrid() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const trpc = useTRPC();
-  const [page, setPage] = useState(1);
-  const [metadata, setMetadata] = useState<MetadataObject[]>([]);
-  const [thumbnails, setThumbnails] = useState<Map<number, ThumbnailObject[]>>(
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [direction, setDirection] = useState<Direction>("forward");
+  const [currentObjects, setCurrentObjects] = useState<ObjectType[]>([]);
+  const [thumbnails, setThumbnails] = useState<Map<string, ThumbnailObject[]>>(
     new Map(),
   );
-  const newMetadata = useQuery(trpc.main.queryInitialObjects.queryOptions());
+  const [pageIndex, setPageIndex] = useState(0);
+
+  const {
+    fetchNextPage,
+    fetchPreviousPage,
+    hasNextPage,
+    hasPreviousPage,
+    isFetchingNextPage,
+    isFetchingPreviousPage,
+    data,
+  } = useInfiniteQuery(
+    trpc.main.getInfiniteObjects.infiniteQueryOptions(
+      {
+        limit: 1,
+        cursor: undefined,
+        direction,
+      },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+        getPreviousPageParam: (firstPage) => firstPage.prevCursor ?? null,
+        staleTime: 5 * 60 * 1000,
+      },
+    ),
+  );
+
+  useEffect(() => {
+    if (!data) return;
+
+    const page = data.pages[pageIndex];
+    console.log(page);
+    setCurrentObjects(page?.query ?? []);
+  }, [data, pageIndex]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!newMetadata.data) return;
-      setMetadata((prev) => [...prev, ...newMetadata.data]);
+      const queryKey = currentObjects.map((obj) => obj.id).join(",");
+      if (thumbnails.has(queryKey)) return;
 
       const APIInputData = new FormData();
-      newMetadata.data.forEach((obj) =>
+      currentObjects.forEach((obj) =>
         APIInputData.append("thumbnails", obj.id),
       );
 
@@ -62,28 +94,73 @@ export default function ObjectGrid() {
 
         setThumbnails((prev) => {
           const updated = new Map(prev);
-          updated.set(page, thumbnails);
+          updated.set(queryKey, thumbnails);
           return updated;
         });
       }
     };
 
-    fetchData().catch((err) => console.error(err));
-  }, [page, baseUrl, newMetadata.data]);
+    if (currentObjects.length > 0) {
+      fetchData().catch(console.error);
+    }
+  }, [currentObjects, baseUrl, thumbnails]);
+
+  const handleNext = async () => {
+    setDirection("forward");
+    const last = data?.pages[data.pages.length - 1];
+    if (last?.nextCursor) {
+      setCursor(last.nextCursor);
+      await fetchNextPage();
+    }
+    setPageIndex((prev) => prev + 1);
+  };
+
+  const handlePrevious = async () => {
+    if (pageIndex <= 0) return;
+
+    setDirection("backward");
+    const first = data?.pages[0];
+    if (first?.prevCursor) {
+      setCursor(first.prevCursor);
+      await fetchPreviousPage();
+    }
+    setPageIndex((prev) => prev - 1);
+  };
 
   return (
-    <div>
-      {thumbnails.get(page)?.map((thumb) => (
-        <div key={thumb.id}>
-          <Image
+    <section>
+      <Objects objects={currentObjects} thumbnails={thumbnails} />
+      <div className="mt-4 flex justify-between">
+        <button onClick={handlePrevious}>Previous</button>
+        <button onClick={handleNext}>Next</button>
+      </div>
+    </section>
+  );
+}
+
+type ObjectsProps = {
+  objects: ObjectType[];
+  thumbnails: Map<string, ThumbnailObject[]>;
+};
+
+function Objects({ objects, thumbnails }: ObjectsProps) {
+  const queryKey = objects.map((obj) => obj.id).join(",");
+  const currentThumbnails = thumbnails.get(queryKey) ?? [];
+
+  return (
+    <div className="grid grid-cols-4 gap-4">
+      {currentThumbnails.length > 0 ? (
+        currentThumbnails.map((thumb) => (
+          <img
+            key={thumb.id}
             src={thumb.url}
-            alt={`Thumbnail ${thumb.id}`}
-            width={100}
-            height={100}
+            alt={`Thumbnail for ${thumb.id}`}
+            className="h-auto w-full"
           />
-          <p>{thumb.id}</p>
-        </div>
-      ))}
+        ))
+      ) : (
+        <p>Loading thumbnails...</p>
+      )}
     </div>
   );
 }

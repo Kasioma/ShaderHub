@@ -15,3 +15,10 @@ export const supportedLoaders = Object.freeze({
 
 export type SupportedLoaders =
   (typeof supportedLoaders)[keyof typeof supportedLoaders];
+
+export const direction = Object.freeze({
+  forward: "forward",
+  backward: "backward",
+} as const);
+
+export type Direction = (typeof direction)[keyof typeof direction];

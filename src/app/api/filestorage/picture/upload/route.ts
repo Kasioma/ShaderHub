@@ -1,6 +1,6 @@
 import { env } from "@/env";
 import { auth } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const { sessionClaims } = await auth();

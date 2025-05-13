@@ -5,12 +5,14 @@ import type { Direction } from "@/utilities/types";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import JSZip from "jszip";
 import { useEffect, useState } from "react";
+import ObjectArticle from "./ObjectArticle";
 
 type ObjectType = {
   id: string;
   name: string;
   userId: string;
   createdAt: number;
+  username: string;
 };
 
 type ThumbnailObject = {
@@ -56,7 +58,6 @@ export default function ObjectGrid() {
     if (!data) return;
 
     const page = data.pages[pageIndex];
-    console.log(page);
     setCurrentObjects(page?.query ?? []);
   }, [data, pageIndex]);
 
@@ -146,18 +147,21 @@ type ObjectsProps = {
 function Objects({ objects, thumbnails }: ObjectsProps) {
   const queryKey = objects.map((obj) => obj.id).join(",");
   const currentThumbnails = thumbnails.get(queryKey) ?? [];
-
   return (
     <div className="grid grid-cols-4 gap-4">
       {currentThumbnails.length > 0 ? (
-        currentThumbnails.map((thumb) => (
-          <img
-            key={thumb.id}
-            src={thumb.url}
-            alt={`Thumbnail for ${thumb.id}`}
-            className="h-auto w-full"
-          />
-        ))
+        currentThumbnails.map((thumb) => {
+          const matchingObject = objects.find((obj) => obj.id === thumb.id);
+
+          return (
+            <ObjectArticle
+              key={thumb.id}
+              url={thumb.url}
+              title={matchingObject?.name ?? "Untitled"}
+              username={matchingObject?.username ?? "Unknown"}
+            />
+          );
+        })
       ) : (
         <p>Loading thumbnails...</p>
       )}

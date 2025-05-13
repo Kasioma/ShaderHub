@@ -3,6 +3,8 @@ import { db } from "@/server/db";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { visibility } from "@/utilities/types";
+import { objectTable, userTable } from "@/server/db/schema";
+import { eq, and, desc, asc, lt, gt } from "drizzle-orm";
 
 export async function isSignedIn() {
   const { sessionClaims } = await auth();
@@ -24,28 +26,32 @@ export const mainRouter = createTRPCRouter({
       const cursor = input.cursor;
       const direction = input.direction;
 
-      const query = await db.query.objectTable.findMany({
-        limit: limit + 1,
-        where: (obj, { and, lt, gt, eq }) =>
+      const query = await db
+        .select({
+          id: objectTable.id,
+          name: objectTable.name,
+          userId: objectTable.userId,
+          createdAt: objectTable.createdAt,
+          username: userTable.username,
+        })
+        .from(objectTable)
+        .innerJoin(userTable, eq(objectTable.userId, userTable.id))
+        .where(
           and(
-            eq(obj.visibility, visibility.public),
+            eq(objectTable.visibility, visibility.public),
             cursor
               ? direction === "forward"
-                ? lt(obj.createdAt, cursor)
-                : gt(obj.createdAt, cursor)
+                ? lt(objectTable.createdAt, cursor)
+                : gt(objectTable.createdAt, cursor)
               : undefined,
           ),
-        orderBy: (obj, { asc, desc }) =>
+        )
+        .orderBy(
           direction === "forward"
-            ? [desc(obj.createdAt)]
-            : [asc(obj.createdAt)],
-        columns: {
-          id: true,
-          name: true,
-          userId: true,
-          createdAt: true,
-        },
-      });
+            ? desc(objectTable.createdAt)
+            : asc(objectTable.createdAt),
+        )
+        .limit(limit + 1);
 
       if (direction === "backward") {
         query.reverse();

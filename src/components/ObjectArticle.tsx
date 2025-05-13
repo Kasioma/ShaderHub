@@ -1,21 +1,19 @@
 import Image from "next/image";
 
 type Props = {
-  object: string;
-  profilePicture: string;
+  url: string;
   title: string;
+  username: string;
 };
 
-export default function ObjectArticle({
-  object,
-  profilePicture,
-  title,
-}: Props) {
+export default function ObjectArticle({ url, title, username }: Props) {
   return (
     <article>
-      <Image src={object} alt="Object Picture" />
-      <div>
-        <Image src={profilePicture} alt="Profile Picture" />
+      <div className="h-[90%]">
+        <Image src={url} alt="Object Picture" width={300} height={300} />
+      </div>
+      <div className="h-[10%]">
+        <h2>{username}</h2>
         <h2>{title}</h2>
       </div>
     </article>

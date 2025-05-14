@@ -68,8 +68,9 @@ export const mainRouter = createTRPCRouter({
       }
 
       if (query.length > 0) {
-        if (direction === "forward") nextCursor = query[0]!.createdAt;
-        else prevCursor = query[query.length - 1]!.createdAt;
+        if (direction === "forward")
+          nextCursor = query[query.length - 1]!.createdAt;
+        else prevCursor = query[0]!.createdAt;
       }
 
       return {

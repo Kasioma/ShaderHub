@@ -6,6 +6,8 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import JSZip from "jszip";
 import { useEffect, useState } from "react";
 import ObjectArticle from "./ObjectArticle";
+import { CircleChevronLeft, CircleChevronRight, Cog } from "lucide-react";
+import Image from "next/image";
 
 type ObjectType = {
   id: string;
@@ -42,7 +44,7 @@ export default function ObjectGrid() {
   } = useInfiniteQuery(
     trpc.main.getInfiniteObjects.infiniteQueryOptions(
       {
-        limit: 1,
+        limit: 20,
         cursor: undefined,
         direction,
       },
@@ -129,11 +131,16 @@ export default function ObjectGrid() {
   };
 
   return (
-    <section>
+    <section className="mx-auto mt-5 w-10/12">
       <Objects objects={currentObjects} thumbnails={thumbnails} />
-      <div className="mt-4 flex justify-between">
-        <button onClick={handlePrevious}>Previous</button>
-        <button onClick={handleNext}>Next</button>
+      <div className="mx-auto mt-4 flex w-fit justify-between gap-5 text-xl text-text">
+        <button onClick={handlePrevious}>
+          <CircleChevronLeft />
+        </button>
+        <span>{pageIndex + 1}</span>
+        <button onClick={handleNext}>
+          <CircleChevronRight />
+        </button>
       </div>
     </section>
   );
@@ -148,23 +155,30 @@ function Objects({ objects, thumbnails }: ObjectsProps) {
   const queryKey = objects.map((obj) => obj.id).join(",");
   const currentThumbnails = thumbnails.get(queryKey) ?? [];
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <>
       {currentThumbnails.length > 0 ? (
-        currentThumbnails.map((thumb) => {
-          const matchingObject = objects.find((obj) => obj.id === thumb.id);
-
-          return (
-            <ObjectArticle
-              key={thumb.id}
-              url={thumb.url}
-              title={matchingObject?.name ?? "Untitled"}
-              username={matchingObject?.username ?? "Unknown"}
-            />
-          );
-        })
+        <div className="grid grid-cols-4 gap-4">
+          {currentThumbnails.map((thumb) => {
+            const matchingObject = objects.find((obj) => obj.id === thumb.id);
+            return (
+              <ObjectArticle
+                key={thumb.id}
+                url={thumb.url}
+                title={matchingObject?.name ?? "Untitled"}
+                username={matchingObject?.username ?? "Unknown"}
+              />
+            );
+          })}
+        </div>
       ) : (
-        <p>Loading thumbnails...</p>
+        <div className="flex min-h-[75vh] w-full flex-col items-center justify-center gap-4 text-text opacity-70">
+          <Cog
+            className="h-16 w-16 animate-spin"
+            style={{ animationDuration: "9s" }}
+          />
+          <p className="text-lg">Loading thumbnails...</p>
+        </div>
       )}
-    </div>
+    </>
   );
 }

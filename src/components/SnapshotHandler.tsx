@@ -18,7 +18,6 @@ export default function SnapshotHandler({ modelLoaded, onCapture }: Props) {
 
     if (frameCount.current > 50) {
       const dataUrl = gl.domElement.toDataURL("image/png");
-      console.log(dataUrl);
       onCapture(dataUrl);
       setCaptured(true);
     }

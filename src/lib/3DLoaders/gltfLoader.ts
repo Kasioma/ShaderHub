@@ -1,6 +1,7 @@
 import { useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
+import { normalizeModelGLTF } from "./helper";
 
 export function useGLTFLoader({
   gltf,
@@ -28,7 +29,9 @@ export function useGLTFLoader({
     return url;
   });
 
-  return useLoader(GLTFLoader, gltf, (loader) => {
+  const gltfModel = useLoader(GLTFLoader, gltf, (loader) => {
     loader.manager = manager;
   });
+
+  return normalizeModelGLTF(gltfModel);
 }

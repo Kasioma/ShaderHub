@@ -8,6 +8,9 @@ import { useEffect, useState } from "react";
 import ObjectArticle from "./ObjectArticle";
 import { CircleChevronLeft, CircleChevronRight, Cog } from "lucide-react";
 import Image from "next/image";
+import { useModal } from "@/context/modal";
+import { cn } from "@/utilities/utils";
+import ModelModal from "./ModelModal";
 
 type ObjectType = {
   id: string;
@@ -23,6 +26,7 @@ type ThumbnailObject = {
 };
 
 export default function ObjectGrid() {
+  const { modal } = useModal();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const trpc = useTRPC();
   const [cursor, setCursor] = useState<number | null>(null);
@@ -33,15 +37,7 @@ export default function ObjectGrid() {
   );
   const [pageIndex, setPageIndex] = useState(0);
 
-  const {
-    fetchNextPage,
-    fetchPreviousPage,
-    hasNextPage,
-    hasPreviousPage,
-    isFetchingNextPage,
-    isFetchingPreviousPage,
-    data,
-  } = useInfiniteQuery(
+  const { fetchNextPage, fetchPreviousPage, data } = useInfiniteQuery(
     trpc.main.getInfiniteObjects.infiniteQueryOptions(
       {
         limit: 20,
@@ -129,31 +125,39 @@ export default function ObjectGrid() {
     }
     setPageIndex((prev) => prev - 1);
   };
-
   return (
-    <section className="mx-auto mt-5 w-10/12">
-      <Objects objects={currentObjects} thumbnails={thumbnails} />
-      <div className="mx-auto mt-4 flex w-fit justify-between gap-5 text-xl text-text">
-        <button onClick={handlePrevious}>
-          <CircleChevronLeft />
-        </button>
-        <span>{pageIndex + 1}</span>
-        <button onClick={handleNext}>
-          <CircleChevronRight />
-        </button>
-      </div>
-    </section>
+    <>
+      <section className="mx-auto mt-5 w-10/12">
+        <Objects
+          objects={currentObjects}
+          thumbnails={thumbnails}
+          modal={modal}
+        />
+        <div className="mx-auto mt-4 flex w-fit justify-between gap-5 text-xl text-text">
+          <button onClick={handlePrevious}>
+            <CircleChevronLeft />
+          </button>
+          <span>{pageIndex + 1}</span>
+          <button onClick={handleNext}>
+            <CircleChevronRight />
+          </button>
+        </div>
+      </section>
+      {/* <ModelModal /> */}
+    </>
   );
 }
 
 type ObjectsProps = {
   objects: ObjectType[];
   thumbnails: Map<string, ThumbnailObject[]>;
+  modal: boolean;
 };
 
-function Objects({ objects, thumbnails }: ObjectsProps) {
+function Objects({ objects, thumbnails, modal }: ObjectsProps) {
   const queryKey = objects.map((obj) => obj.id).join(",");
   const currentThumbnails = thumbnails.get(queryKey) ?? [];
+
   return (
     <>
       {currentThumbnails.length > 0 ? (
@@ -166,6 +170,7 @@ function Objects({ objects, thumbnails }: ObjectsProps) {
                 url={thumb.url}
                 title={matchingObject?.name ?? "Untitled"}
                 username={matchingObject?.username ?? "Unknown"}
+                modal={modal}
               />
             );
           })}

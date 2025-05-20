@@ -5,11 +5,12 @@ import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { ClerkProvider } from "@clerk/nextjs";
-import { ThemeContextProvider } from "@/context/theme";
+import { ThemeContextProvider } from "@/context/themeProvider";
 import TailwindIndicator from "@/components/TailwindIndicator";
-import { ModalContextProvider } from "@/context/modal";
+import { ModalContextProvider } from "@/context/searchProvider";
 import { ClientProvider } from "@/context/clientProvider";
 import { Toaster } from "@/components/toaster/toaster";
+import { ObjectModalContextProvider } from "@/context/objectProvider";
 
 export const metadata: Metadata = {
   title: "ShaderHub",
@@ -29,15 +30,17 @@ export default function RootLayout({
     <ClerkProvider>
       <ThemeContextProvider>
         <ModalContextProvider>
-          <html lang="en" className={`${geist.variable}`}>
-            <body>
-              <ClientProvider>
-                <TRPCReactProvider>{children}</TRPCReactProvider>
-                <Toaster />
-                <TailwindIndicator />
-              </ClientProvider>
-            </body>
-          </html>
+          <ObjectModalContextProvider>
+            <html lang="en" className={`${geist.variable}`}>
+              <body>
+                <ClientProvider>
+                  <TRPCReactProvider>{children}</TRPCReactProvider>
+                  <Toaster />
+                  <TailwindIndicator />
+                </ClientProvider>
+              </body>
+            </html>
+          </ObjectModalContextProvider>
         </ModalContextProvider>
       </ThemeContextProvider>
     </ClerkProvider>

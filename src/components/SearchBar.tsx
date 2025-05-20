@@ -1,31 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Search } from "lucide-react";
-import { useModal } from "@/context/modal";
+import { useModal } from "@/context/searchProvider";
+import { useObjectModal } from "@/context/objectProvider";
 
 export default function SearchBar() {
-  const { setModal } = useModal();
-  const [isOpen, setIsOpen] = useState(false);
+  const { modal, setModal } = useModal();
+  const { setObjectModal } = useObjectModal();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen && e.ctrlKey && e.key.toLowerCase() === "k") {
+      if (!modal && e.ctrlKey && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setIsOpen(true);
         setModal(true);
+        setObjectModal(false);
       }
-      if (isOpen && e.key.toLowerCase() === "escape") {
+      if (modal && e.key.toLowerCase() === "escape") {
         e.preventDefault();
-        setIsOpen(false);
         setModal(false);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, setModal]);
+  }, [setModal, modal, setObjectModal]);
 
   const handleModalClose = () => {
-    setIsOpen(false);
     setModal(false);
   };
 
@@ -33,15 +32,15 @@ export default function SearchBar() {
     <>
       <div
         onClick={() => {
-          setIsOpen(true);
           setModal(true);
+          setObjectModal(false);
         }}
         className="flex cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary px-2 py-1 text-sm"
       >
         <Search className="h-3 w-3" />
         <span>Ctrl K</span>
       </div>
-      {isOpen && <Modal onClose={handleModalClose} />}
+      {modal && <Modal onClose={handleModalClose} />}
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import JSZip from "jszip";
-import type { SupportedLoaders } from "./types";
+import JSZip, { type JSZipObject } from "jszip";
+import type { ParseFBXProps, ParseGLTFProps, SupportedLoaders } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,19 +35,6 @@ export const dataURLtoBlob = (dataUrl: string): Blob => {
   return new Blob([uint8Array], { type: mime });
 };
 
-type ParseGLTFProps = {
-  fileType: SupportedLoaders;
-  fileBlob: Blob;
-  fileBinary: Blob | null;
-  fileTextures: Map<string, Blob>;
-};
-
-type ParseFBXProps = {
-  fileType: SupportedLoaders;
-  fileBlob: Blob;
-  fileTextures: Map<string, Blob>;
-};
-
 export const unzipFiles = async (
   zipBlob: Blob,
 ): Promise<ParseGLTFProps | ParseFBXProps | null> => {
@@ -77,20 +64,19 @@ export const unzipFiles = async (
   if (!modelFile || !modelType) return null;
 
   const fileEntry = zip.file(modelFile);
-  if (!fileEntry) return null;
-  const modelBlob = await fileEntry.async("blob");
+  const modelBlob = await getFileEntry(fileEntry);
+  if (!modelBlob) return null;
 
-  if (modelType === "gltf") {
-    const binEntry = binaryFile ? zip.file(binaryFile) : null;
-    if (binEntry) {
-      const binBlob = await binEntry.async("blob");
-      return {
-        fileType: modelType,
-        fileBlob: modelBlob,
-        fileBinary: binBlob,
-        fileTextures: textures,
-      };
-    }
+  if (modelType === "gltf" && binaryFile) {
+    const binEntry = zip.file(binaryFile);
+    if (!binEntry) return null;
+    const binBlob = await getFileEntry(binEntry);
+    return {
+      fileType: modelType,
+      fileBlob: modelBlob,
+      fileBinary: binBlob,
+      fileTextures: textures,
+    };
   }
 
   return {
@@ -98,5 +84,32 @@ export const unzipFiles = async (
     fileBlob: modelBlob,
     fileTextures: textures,
   };
-  return null;
 };
+
+function getFileEntry(
+  fileEntry: JSZipObject | null,
+  type = "application/octet-stream",
+): Promise<Blob> | null {
+  if (!fileEntry) return null;
+
+  if (fileEntry.name.endsWith(".gltf")) {
+    return fileEntry
+      .async("arraybuffer")
+      .then(
+        (buffer: ArrayBuffer) => new Blob([buffer], { type: "model/gltf+json" }),
+      );
+  }
+
+  if (fileEntry.name.endsWith(".bin")) {
+    return fileEntry
+      .async("arraybuffer")
+      .then(
+        (buffer: ArrayBuffer) =>
+          new Blob([buffer], { type: "application/octet-stream" }),
+      );
+  }
+
+  return fileEntry
+    .async("arraybuffer")
+    .then((buffer: ArrayBuffer) => new Blob([buffer], { type }));
+}

@@ -1,21 +1,48 @@
+import type { ParseFBXProps, ParseGLTFProps } from "@/utilities/types";
 import { cn, unzipFiles } from "@/utilities/utils";
-import JSZip from "jszip";
 import { Download } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import ModelModal from "./ModelModal";
+import { useObjectModal } from "@/context/objectProvider";
+import { useModal } from "@/context/searchProvider";
 
 type Props = {
+  id: string;
   url: string;
   title: string;
   username: string;
-  modal: boolean;
+  userId: string;
 };
 
-export default function ObjectArticle({ url, title, username, modal }: Props) {
+export default function ObjectArticle({
+  id,
+  url,
+  title,
+  username,
+  userId,
+}: Props) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const [parsedObject, setParsedObject] = useState<
+    ParseGLTFProps | ParseFBXProps | null
+  >(null);
+  const { setObjectModal } = useObjectModal();
+  const { modal } = useModal();
 
-  const handleObjectClick = async (url: string) => {
+  useEffect(() => {
+    if (parsedObject) setObjectModal(true);
+  }, [parsedObject, setObjectModal]);
+
+  useEffect(() => {
+    if (modal) {
+      setParsedObject(null);
+      setObjectModal(false);
+    }
+  }, [modal, setObjectModal]);
+
+  const handleObjectClick = async (id: string) => {
     const APIInputData = new FormData();
-    APIInputData.append("file", url);
+    APIInputData.append("file", id);
     const res = await fetch(`${baseUrl}/api/filestorage/object/query`, {
       method: "POST",
       body: APIInputData,
@@ -28,9 +55,10 @@ export default function ObjectArticle({ url, title, username, modal }: Props) {
       const zipBlob = await res.blob();
       const unzipped = await unzipFiles(zipBlob);
       if (!unzipped) return;
-      console.log(unzipped);
+      setParsedObject(unzipped);
     }
   };
+  
   return (
     <article
       className={cn("relative rounded-b-md bg-secondary shadow-md", {
@@ -44,7 +72,7 @@ export default function ObjectArticle({ url, title, username, modal }: Props) {
           alt="Object Picture"
           width={300}
           height={300}
-          onClick={() => handleObjectClick(url)}
+          onClick={() => handleObjectClick(id)}
           className="cursor-pointer"
         />
         <Download className="absolute right-2 top-2 h-5 w-5 cursor-pointer text-text" />
@@ -53,6 +81,17 @@ export default function ObjectArticle({ url, title, username, modal }: Props) {
         <h2>{username}</h2>
         <h2>{title}</h2>
       </div>
+      {parsedObject && !modal && (
+        <ModelModal
+          fileType={parsedObject.fileType}
+          loadedFile={parsedObject.fileBlob}
+          binary={parsedObject.fileBlob}
+          textures={parsedObject.fileTextures}
+          title={title}
+          username={username}
+          userId={userId}
+        />
+      )}
     </article>
   );
 }

@@ -7,10 +7,6 @@ import JSZip from "jszip";
 import { useEffect, useState } from "react";
 import ObjectArticle from "./ObjectArticle";
 import { CircleChevronLeft, CircleChevronRight, Cog } from "lucide-react";
-import Image from "next/image";
-import { useModal } from "@/context/modal";
-import { cn } from "@/utilities/utils";
-import ModelModal from "./ModelModal";
 
 type ObjectType = {
   id: string;
@@ -26,7 +22,6 @@ type ThumbnailObject = {
 };
 
 export default function ObjectGrid() {
-  const { modal } = useModal();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const trpc = useTRPC();
   const [cursor, setCursor] = useState<number | null>(null);
@@ -128,11 +123,7 @@ export default function ObjectGrid() {
   return (
     <>
       <section className="mx-auto mt-5 w-10/12">
-        <Objects
-          objects={currentObjects}
-          thumbnails={thumbnails}
-          modal={modal}
-        />
+        <Objects objects={currentObjects} thumbnails={thumbnails} />
         <div className="mx-auto mt-4 flex w-fit justify-between gap-5 text-xl text-text">
           <button onClick={handlePrevious}>
             <CircleChevronLeft />
@@ -143,7 +134,6 @@ export default function ObjectGrid() {
           </button>
         </div>
       </section>
-      {/* <ModelModal /> */}
     </>
   );
 }
@@ -151,10 +141,9 @@ export default function ObjectGrid() {
 type ObjectsProps = {
   objects: ObjectType[];
   thumbnails: Map<string, ThumbnailObject[]>;
-  modal: boolean;
 };
 
-function Objects({ objects, thumbnails, modal }: ObjectsProps) {
+function Objects({ objects, thumbnails }: ObjectsProps) {
   const queryKey = objects.map((obj) => obj.id).join(",");
   const currentThumbnails = thumbnails.get(queryKey) ?? [];
 
@@ -167,10 +156,11 @@ function Objects({ objects, thumbnails, modal }: ObjectsProps) {
             return (
               <ObjectArticle
                 key={thumb.id}
+                id={thumb.id}
                 url={thumb.url}
                 title={matchingObject?.name ?? "Untitled"}
                 username={matchingObject?.username ?? "Unknown"}
-                modal={modal}
+                userId={matchingObject?.userId ?? "Unknown"}
               />
             );
           })}

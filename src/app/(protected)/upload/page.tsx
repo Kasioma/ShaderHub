@@ -11,7 +11,7 @@ import { OrbitControls } from "@react-three/drei";
 import { CircleX, File, Search, Tag } from "lucide-react";
 import PreviewModel from "@/components/PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
-import { useModal } from "@/context/modal";
+import { useModal } from "@/context/searchProvider";
 import { cn, zipFiles, dataURLtoBlob } from "@/utilities/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";

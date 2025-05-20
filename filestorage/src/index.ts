@@ -82,7 +82,18 @@ app.post("/object", async (c) => {
   return c.json({ success: true }, 200);
 });
 
-app.delete("/pictures/:id", async (c) => {
+app.post("/object/:id", async (c) => {
+  const fileId = c.req.param("id");
+  console.log(fileId);
+  const filePath = path.join(STATIC_PATH_OBJECTS, fileId);
+
+  if (!fs.existsSync(filePath)) return c.json({ error: "Not found" }, 404);
+
+  const file = fs.readFileSync(filePath);
+  return c.body(file);
+});
+
+app.delete("/picture/:id", async (c) => {
   const fileId = c.req.param("id");
   const filePath = path.join(STATIC_PATH_PICTURES, fileId);
 
@@ -93,7 +104,7 @@ app.delete("/pictures/:id", async (c) => {
   return c.body("", 200);
 });
 
-app.delete("/objects/:id", async (c) => {
+app.delete("/object/:id", async (c) => {
   const fileId = c.req.param("id");
   const filePath = path.join(STATIC_PATH_OBJECTS, fileId);
 

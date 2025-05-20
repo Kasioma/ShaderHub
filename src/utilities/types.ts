@@ -22,3 +22,16 @@ export const direction = Object.freeze({
 } as const);
 
 export type Direction = (typeof direction)[keyof typeof direction];
+
+export type ParseGLTFProps = {
+  fileType: SupportedLoaders;
+  fileBlob: Blob;
+  fileBinary: Blob | null;
+  fileTextures: Map<string, Blob>;
+};
+
+export type ParseFBXProps = {
+  fileType: SupportedLoaders;
+  fileBlob: Blob;
+  fileTextures: Map<string, Blob>;
+};

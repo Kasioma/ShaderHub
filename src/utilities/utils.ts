@@ -71,7 +71,9 @@ export const unzipFiles = async (
     const binEntry = zip.file(binaryFile);
     if (!binEntry) return null;
     const binBlob = await getFileEntry(binEntry);
+    if (!binBlob) return null;
     return {
+      kind: "gltf",
       fileType: modelType,
       fileBlob: modelBlob,
       fileBinary: binBlob,
@@ -80,6 +82,7 @@ export const unzipFiles = async (
   }
 
   return {
+    kind: "fbx",
     fileType: modelType,
     fileBlob: modelBlob,
     fileTextures: textures,
@@ -94,10 +97,8 @@ function getFileEntry(
 
   if (fileEntry.name.endsWith(".gltf")) {
     return fileEntry
-      .async("arraybuffer")
-      .then(
-        (buffer: ArrayBuffer) => new Blob([buffer], { type: "model/gltf+json" }),
-      );
+      .async("string")
+      .then((text) => new Blob([text], { type: "model/gltf+json" }));
   }
 
   if (fileEntry.name.endsWith(".bin")) {
@@ -112,4 +113,13 @@ function getFileEntry(
   return fileEntry
     .async("arraybuffer")
     .then((buffer: ArrayBuffer) => new Blob([buffer], { type }));
+}
+
+export function downloadZip(zipBlob: Blob, filename = "model.zip") {
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }

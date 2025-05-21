@@ -1,5 +1,5 @@
-import type { ParseFBXProps, ParseGLTFProps } from "@/utilities/types";
-import { cn, unzipFiles } from "@/utilities/utils";
+import type { ParsedModelProps } from "@/utilities/types";
+import { cn, unzipFiles, downloadZip } from "@/utilities/utils";
 import { Download } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -23,9 +23,10 @@ export default function ObjectArticle({
   userId,
 }: Props) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const [parsedObject, setParsedObject] = useState<
-    ParseGLTFProps | ParseFBXProps | null
-  >(null);
+  const [parsedObject, setParsedObject] = useState<ParsedModelProps | null>(
+    null,
+  );
+  const [zip, setZip] = useState<Blob | null>(null);
   const { setObjectModal } = useObjectModal();
   const { modal } = useModal();
 
@@ -53,12 +54,18 @@ export default function ObjectArticle({
       return;
     } else {
       const zipBlob = await res.blob();
+      // setZip(zipBlob);
       const unzipped = await unzipFiles(zipBlob);
       if (!unzipped) return;
       setParsedObject(unzipped);
     }
   };
-  
+
+  const handleDownload = () => {
+    if (!zip) return;
+    downloadZip(zip);
+  };
+
   return (
     <article
       className={cn("relative rounded-b-md bg-secondary shadow-md", {
@@ -75,7 +82,10 @@ export default function ObjectArticle({
           onClick={() => handleObjectClick(id)}
           className="cursor-pointer"
         />
-        <Download className="absolute right-2 top-2 h-5 w-5 cursor-pointer text-text" />
+        <Download
+          className="absolute right-2 top-2 h-5 w-5 cursor-pointer text-text"
+          onClick={() => handleDownload()}
+        />
       </div>
       <div className="flex justify-around p-2 text-sm text-text">
         <h2>{username}</h2>
@@ -85,7 +95,7 @@ export default function ObjectArticle({
         <ModelModal
           fileType={parsedObject.fileType}
           loadedFile={parsedObject.fileBlob}
-          binary={parsedObject.fileBlob}
+          binary={parsedObject.kind === "gltf" ? parsedObject.fileBinary : null}
           textures={parsedObject.fileTextures}
           title={title}
           username={username}

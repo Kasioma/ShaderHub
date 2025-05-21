@@ -10,7 +10,7 @@ import Image from "next/image";
 type Props = {
   fileType: SupportedLoaders;
   loadedFile: Blob;
-  binary: Blob;
+  binary: Blob | null;
   textures: Map<string, Blob>;
   title: string;
   username: string;
@@ -67,7 +67,7 @@ export default function ModelModal({
       <PreviewModel
         fileType={fileType}
         fileUrl={URL.createObjectURL(loadedFile)}
-        fileBinary={URL.createObjectURL(binary)}
+        fileBinary={URL.createObjectURL(binary ?? new Blob([]))}
         fileTextures={handleTextures(textures)}
       />
     ),
@@ -80,10 +80,7 @@ export default function ModelModal({
         <div className="flex w-4/6 flex-col gap-1 text-xl text-primary">
           {loadedFile && (
             <div className="relative h-full">
-              <Canvas
-                gl={{ preserveDrawingBuffer: true }}
-                className="h-full w-full rounded-md border-2 border-primary"
-              >
+              <Canvas className="h-full w-full rounded-md border-2 border-primary">
                 <directionalLight position={[5, 5, 5]} intensity={1} />
                 <ambientLight intensity={0.5} />
                 <PerspectiveCamera

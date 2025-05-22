@@ -8,17 +8,17 @@ import { useObjectModal } from "@/context/objectProvider";
 import { useModal } from "@/context/searchProvider";
 
 type Props = {
-  id: string;
-  url: string;
-  title: string;
+  objectId: string;
+  thumbnailUrl: string;
+  thumbnailTitle: string;
   username: string;
   userId: string;
 };
 
 export default function ObjectArticle({
-  id,
-  url,
-  title,
+  objectId,
+  thumbnailUrl,
+  thumbnailTitle,
   username,
   userId,
 }: Props) {
@@ -40,6 +40,11 @@ export default function ObjectArticle({
       setObjectModal(false);
     }
   }, [modal, setObjectModal]);
+
+  const handleModalClose = () => {
+    setParsedObject(null);
+    setObjectModal(false);
+  };
 
   const handleObjectClick = async (id: string) => {
     const APIInputData = new FormData();
@@ -75,12 +80,12 @@ export default function ObjectArticle({
     >
       <div className="relative bg-background p-0">
         <Image
-          src={url}
+          src={thumbnailUrl}
           alt="Object Picture"
           width={300}
           height={300}
-          onClick={() => handleObjectClick(id)}
-          className="cursor-pointer"
+          onClick={() => handleObjectClick(objectId)}
+          className="h-[200px] cursor-pointer object-cover"
         />
         <Download
           className="absolute right-2 top-2 h-5 w-5 cursor-pointer text-text"
@@ -89,7 +94,7 @@ export default function ObjectArticle({
       </div>
       <div className="flex justify-around p-2 text-sm text-text">
         <h2>{username}</h2>
-        <h2>{title}</h2>
+        <h2>{thumbnailTitle}</h2>
       </div>
       {parsedObject && !modal && (
         <ModelModal
@@ -97,9 +102,10 @@ export default function ObjectArticle({
           loadedFile={parsedObject.fileBlob}
           binary={parsedObject.kind === "gltf" ? parsedObject.fileBinary : null}
           textures={parsedObject.fileTextures}
-          title={title}
+          title={thumbnailTitle}
           username={username}
           userId={userId}
+          onClose={handleModalClose}
         />
       )}
     </article>

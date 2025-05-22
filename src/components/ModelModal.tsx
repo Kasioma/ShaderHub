@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import PreviewModel from "./PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
 import { useObjectModal } from "@/context/objectProvider";
-import { Bookmark, CircleUserRound, Star } from "lucide-react";
+import { Bookmark, CircleUserRound, Star, X } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
   title: string;
   username: string;
   userId: string;
+  onClose: () => void;
 };
 
 export default function ModelModal({
@@ -25,15 +26,10 @@ export default function ModelModal({
   title,
   username,
   userId,
+  onClose,
 }: Props) {
   const { objectModal, setObjectModal } = useObjectModal();
   const [profilePic, setProfilePic] = useState<string | null>(null);
-
-  const [comments, setComments] = useState<string[]>(["comment1", "comment2"]);
-
-  const handleModalClose = () => {
-    setObjectModal(false);
-  };
 
   useEffect(() => {
     const fetchPicture = async () => {
@@ -75,8 +71,14 @@ export default function ModelModal({
   );
 
   return objectModal ? (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="flex max-h-[75vh] min-h-[50vh] w-[60vw] overflow-y-auto rounded-xl bg-secondary p-6 shadow-lg">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="relative flex max-h-[75vh] min-h-[50vh] w-[60vw] overflow-y-auto rounded-xl bg-secondary p-6 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex w-4/6 flex-col gap-1 text-xl text-primary">
           {loadedFile && (
             <div className="relative h-full">
@@ -110,24 +112,11 @@ export default function ModelModal({
             </div>
           </div>
         </div>
-        <div className="relative flex w-2/6 flex-col items-center">
-          <div>
-            {comments.map((comment) => {
-              return (
-                <div key={comment} className="w-[90%] text-text ">
-                  {comment}
-                </div>
-              );
-            })}
-          </div>
-          <div className="absolute bottom-2 w-[90%]">
-            <input
-              type="text"
-              placeholder="Comment. . ."
-              className="text-md bg-inherit outline-none"
-            />
-          </div>
-        </div>
+        <div className="relative flex w-2/6 flex-col items-center"></div>
+        <X
+          onClick={onClose}
+          className="absolute right-5 top-5 h-5 w-5 cursor-pointer text-text"
+        />
       </div>
     </div>
   ) : null;

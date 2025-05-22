@@ -110,12 +110,9 @@ export default function Page() {
       const blobUrl = URL.createObjectURL(file);
 
       if (/\.(gltf|glb|obj|fbx)$/.test(file.name)) {
-        console.log(file);
         loadedFilePath = blobUrl;
         fileType = file.name.split(".").pop() as SupportedLoaders;
       } else if (file.name.endsWith(".bin")) {
-        console.log(file);
-
         binaryPath = blobUrl;
       } else if (/\.(png|jpg|jpeg)$/.test(file.name)) {
         texturesPath.set(file.webkitRelativePath.split("/").pop()!, blobUrl);

@@ -156,9 +156,9 @@ function Objects({ objects, thumbnails }: ObjectsProps) {
             return (
               <ObjectArticle
                 key={thumb.id}
-                id={thumb.id}
-                url={thumb.url}
-                title={matchingObject?.name ?? "Untitled"}
+                objectId={thumb.id}
+                thumbnailUrl={thumb.url}
+                thumbnailTitle={matchingObject?.name ?? "Untitled"}
                 username={matchingObject?.username ?? "Unknown"}
                 userId={matchingObject?.userId ?? "Unknown"}
               />

@@ -8,8 +8,7 @@ import { logger } from "hono/logger";
 import { nanoid } from "nanoid";
 import { serve } from "@hono/node-server";
 import archiver from "archiver";
-import type { Archiver } from "archiver";
-import { PassThrough, Readable } from "stream";
+import { PassThrough } from "stream";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,7 +83,6 @@ app.post("/object", async (c) => {
 
 app.post("/object/:id", async (c) => {
   const fileId = c.req.param("id");
-  console.log(fileId);
   const filePath = path.join(STATIC_PATH_OBJECTS, fileId);
 
   if (!fs.existsSync(filePath)) return c.json({ error: "Not found" }, 404);

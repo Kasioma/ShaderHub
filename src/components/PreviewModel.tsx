@@ -9,12 +9,14 @@ export default function PreviewModel({
   fileBinary,
   fileTextures,
   onLoaded,
+  onLoading,
 }: {
   fileType: SupportedLoaders;
   fileUrl: string;
   fileBinary: string;
   fileTextures: Map<string, string>;
   onLoaded?: () => void;
+  onLoading?: () => void;
 }) {
   return (
     <Suspense fallback={<LoadingPlaceholder />}>

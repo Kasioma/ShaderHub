@@ -2,16 +2,24 @@ import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import PreviewModel from "./PreviewModel";
-import type { SupportedLoaders } from "@/utilities/types";
 import { useObjectModal } from "@/context/objectProvider";
-import { Bookmark, CircleUserRound, Star, X } from "lucide-react";
+import {
+  Bookmark,
+  CircleUserRound,
+  Download,
+  Star,
+  Tag,
+  X,
+} from "lucide-react";
 import Image from "next/image";
+import { downloadZip, unzipFiles } from "@/utilities/utils";
+import type { ParsedModelProps } from "@/utilities/types";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/utilities/trpc";
 
 type Props = {
-  fileType: SupportedLoaders;
-  loadedFile: Blob;
-  binary: Blob | null;
-  textures: Map<string, Blob>;
+  modelBlob: Blob;
+  objectId: string;
   title: string;
   username: string;
   userId: string;
@@ -19,17 +27,22 @@ type Props = {
 };
 
 export default function ModelModal({
-  fileType,
-  loadedFile,
-  binary,
-  textures,
+  modelBlob,
+  objectId,
   title,
   username,
   userId,
   onClose,
 }: Props) {
+  const trpc = useTRPC();
   const { objectModal, setObjectModal } = useObjectModal();
   const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [parsedObject, setParsedObject] = useState<ParsedModelProps | null>(
+    null,
+  );
+  const { data } = useQuery(
+    trpc.main.getObjectInformation.queryOptions({ objectId: objectId }),
+  );
 
   useEffect(() => {
     const fetchPicture = async () => {
@@ -49,6 +62,16 @@ export default function ModelModal({
     }
   }, [userId]);
 
+  useEffect(() => {
+    if (!modelBlob) return;
+    async function parseModel() {
+      const unzipped = await unzipFiles(modelBlob);
+      if (!unzipped) return;
+      setParsedObject(unzipped);
+    }
+    parseModel().catch(console.error);
+  }, [modelBlob]);
+
   const handleTextures = (textures: Map<string, Blob>) => {
     const result = new Map<string, string>();
     for (const [key, blob] of textures) {
@@ -58,17 +81,25 @@ export default function ModelModal({
     return result;
   };
 
-  const MemoizedModel = useMemo(
-    () => (
+  const MemoizedModel = useMemo(() => {
+    if (!parsedObject) return null;
+
+    return (
       <PreviewModel
-        fileType={fileType}
-        fileUrl={URL.createObjectURL(loadedFile)}
-        fileBinary={URL.createObjectURL(binary ?? new Blob([]))}
-        fileTextures={handleTextures(textures)}
+        fileType={parsedObject.fileType}
+        fileUrl={URL.createObjectURL(parsedObject.fileBlob)}
+        fileBinary={URL.createObjectURL(
+          parsedObject.kind === "gltf" ? parsedObject.fileBinary : new Blob([]),
+        )}
+        fileTextures={handleTextures(parsedObject.fileTextures)}
       />
-    ),
-    [loadedFile, binary, textures, fileType],
-  );
+    );
+  }, [parsedObject]);
+
+  const handleDownload = () => {
+    if (!modelBlob) return;
+    downloadZip(modelBlob);
+  };
 
   return objectModal ? (
     <div
@@ -80,7 +111,7 @@ export default function ModelModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex w-4/6 flex-col gap-1 text-xl text-primary">
-          {loadedFile && (
+          {parsedObject && (
             <div className="relative h-full">
               <Canvas className="h-full w-full rounded-md border-2 border-primary">
                 <directionalLight position={[5, 5, 5]} intensity={1} />
@@ -95,7 +126,7 @@ export default function ModelModal({
               </Canvas>
             </div>
           )}
-          <div className="mt-3 flex flex-row items-center justify-between gap-3">
+          <div className="mt-3 flex flex-row items-center justify-between gap-3 text-text">
             <div className="flex items-center gap-3">
               <ProfilePicture imageUrl={profilePic} />
               <h2>{username} -</h2>
@@ -104,15 +135,30 @@ export default function ModelModal({
             </div>
             <div className="flex gap-3">
               <div>
-                <Star />
+                <Download
+                  className="h-5 w-5 cursor-pointer"
+                  onClick={() => handleDownload()}
+                />
               </div>
               <div>
-                <Bookmark />
+                <Star className="h-5 w-5 cursor-pointer" />
+              </div>
+              <div>
+                <Bookmark className="h-5 w-5 cursor-pointer" />
               </div>
             </div>
           </div>
         </div>
-        <div className="relative flex w-2/6 flex-col items-center"></div>
+        <div className="relative flex w-2/6 flex-col items-center justify-center gap-10">
+          <div className="flex w-[90%] flex-col items-center gap-2">
+            <h3 className="bold text-xl">Tags</h3>
+            <TagList tags={data?.tags ?? []} />
+          </div>
+          <div className="flex w-[90%] flex-col items-center gap-2">
+            <h3 className="bold text-xl">Attributes</h3>
+            <AttributeList attributes={data?.attributes ?? []} />
+          </div>
+        </div>
         <X
           onClick={onClose}
           className="absolute right-5 top-5 h-5 w-5 cursor-pointer text-text"
@@ -141,3 +187,51 @@ const ProfilePicture = ({ imageUrl }: ProfilePictureProps) => {
     />
   );
 };
+
+type TagType = {
+  id: string;
+  name: string;
+  colour: string;
+};
+
+function TagList({ tags }: { tags: TagType[] }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {tags.length > 0
+        ? tags.map((tag) => (
+            <div
+              key={tag.id}
+              className="flex items-center gap-2 rounded-md bg-secondary p-2"
+            >
+              <Tag style={{ color: tag.colour }} />
+              <p style={{ color: tag.colour }}>{tag.name}</p>
+            </div>
+          ))
+        : null}
+    </div>
+  );
+}
+
+type AttributeType = {
+  id: string;
+  name: string;
+  value: string;
+};
+
+function AttributeList({ attributes }: { attributes: AttributeType[] }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {attributes.length > 0
+        ? attributes.map((attribute) => (
+            <div
+              key={attribute.id}
+              className="flex items-center gap-2 rounded-md bg-secondary p-2"
+            >
+              <p>{attribute.name} :</p>
+              <p>{attribute.value}</p>
+            </div>
+          ))
+        : null}
+    </div>
+  );
+}

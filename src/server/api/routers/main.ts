@@ -3,8 +3,17 @@ import { db } from "@/server/db";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { visibility } from "@/utilities/types";
-import { objectTable, userTable } from "@/server/db/schema";
+import {
+  attributeTypeTable,
+  attributeValueObjectRelationTable,
+  attributeValueTable,
+  objectTable,
+  objectTagRelationTable,
+  tagTable,
+  userTable,
+} from "@/server/db/schema";
 import { eq, and, desc, asc, lt, gt } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export async function isSignedIn() {
   const { sessionClaims } = await auth();
@@ -78,5 +87,56 @@ export const mainRouter = createTRPCRouter({
         nextCursor,
         prevCursor,
       };
+    }),
+  getObjectInformation: publicProcedure
+    .input(
+      z.object({
+        objectId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const tags = await db
+          .select({
+            id: tagTable.id,
+            name: tagTable.name,
+            colour: tagTable.colour,
+          })
+          .from(tagTable)
+          .innerJoin(
+            objectTagRelationTable,
+            eq(tagTable.id, objectTagRelationTable.tagId),
+          )
+          .where(eq(objectTagRelationTable.objectId, input.objectId));
+
+        const attributes = await db
+          .select({
+            id: attributeValueTable.id,
+            name: attributeTypeTable.name,
+            value: attributeValueTable.value,
+          })
+          .from(attributeValueTable)
+          .innerJoin(
+            attributeValueObjectRelationTable,
+            eq(
+              attributeValueTable.id,
+              attributeValueObjectRelationTable.attributeId,
+            ),
+          )
+          .innerJoin(
+            attributeTypeTable,
+            eq(attributeValueTable.attributeTypeId, attributeTypeTable.id),
+          )
+          .where(
+            eq(attributeValueObjectRelationTable.objectId, input.objectId),
+          );
+
+        return { tags, attributes };
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Fetch could not be performed.",
+        });
+      }
     }),
 });

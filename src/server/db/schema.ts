@@ -122,3 +122,16 @@ export const attributeValueObjectRelationTable = pgTable(
 export type AttributeValueObjectRelation = InferSelectModel<
   typeof attributeValueObjectRelationTable
 >;
+
+export const searchHistoryTable = pgTable("search_history", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }),
+  query: text("query").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+
+export type SearchHistory = InferSelectModel<typeof searchHistoryTable>;
+
+

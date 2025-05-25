@@ -32,7 +32,7 @@ export default function Header({ user }: Props) {
           <h1 className="text-xl font-semibold">ShaderHub</h1>
         </Link>
         <div className="relative flex items-center gap-5">
-          <SearchBar />
+          <SearchBar userId={user?.id ?? null} />
           <Link
             href="/upload"
             className="flex items-center gap-2 rounded-md px-2 py-1 hover:cursor-pointer"

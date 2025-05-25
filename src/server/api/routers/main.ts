@@ -9,11 +9,13 @@ import {
   attributeValueTable,
   objectTable,
   objectTagRelationTable,
+  searchHistoryTable,
   tagTable,
   userTable,
 } from "@/server/db/schema";
 import { eq, and, desc, asc, lt, gt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { nanoid } from "nanoid";
 
 export async function isSignedIn() {
   const { sessionClaims } = await auth();
@@ -136,6 +138,50 @@ export const mainRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Fetch could not be performed.",
+        });
+      }
+    }),
+  getUserSearchHistory: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const query = await db
+        .select({
+          id: searchHistoryTable.id,
+          query: searchHistoryTable.query,
+          createdAt: searchHistoryTable.createdAt,
+        })
+        .from(searchHistoryTable)
+        .where(eq(searchHistoryTable.userId, input.userId))
+        .orderBy(desc(searchHistoryTable.createdAt))
+        .limit(5);
+
+      return query;
+    }),
+  addUserSearchHistory: publicProcedure
+    .input(
+      z.object({
+        query: z.string(),
+        userId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        console.log(input);
+        if (!input.userId) return;
+        await db.insert(searchHistoryTable).values({
+          id: nanoid(),
+          userId: input.userId,
+          query: input.query,
+          createdAt: Math.floor(Date.now() / 1000),
+        });
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to add search history",
         });
       }
     }),

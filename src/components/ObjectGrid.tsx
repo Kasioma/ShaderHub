@@ -8,6 +8,10 @@ import { useEffect, useState } from "react";
 import ObjectArticle from "./ObjectArticle";
 import { CircleChevronLeft, CircleChevronRight, Cog } from "lucide-react";
 
+type Props = {
+  query?: string;
+};
+
 type ObjectType = {
   id: string;
   name: string;
@@ -21,7 +25,7 @@ type ThumbnailObject = {
   url: string;
 };
 
-export default function ObjectGrid() {
+export default function ObjectGrid({ query }: Props) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const trpc = useTRPC();
   const [cursor, setCursor] = useState<number | null>(null);

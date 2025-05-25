@@ -13,7 +13,7 @@ import {
   tagTable,
   userTable,
 } from "@/server/db/schema";
-import { eq, and, desc, asc, lt, gt } from "drizzle-orm";
+import { eq, and, desc, asc, lt, gt, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 
@@ -148,18 +148,25 @@ export const mainRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const query = await db
-        .select({
-          id: searchHistoryTable.id,
-          query: searchHistoryTable.query,
-          createdAt: searchHistoryTable.createdAt,
-        })
-        .from(searchHistoryTable)
-        .where(eq(searchHistoryTable.userId, input.userId))
-        .orderBy(desc(searchHistoryTable.createdAt))
-        .limit(5);
+      try {
+        const query = await db
+          .select({
+            id: searchHistoryTable.id,
+            query: searchHistoryTable.query,
+            createdAt: searchHistoryTable.createdAt,
+          })
+          .from(searchHistoryTable)
+          .where(eq(searchHistoryTable.userId, input.userId))
+          .orderBy(desc(searchHistoryTable.createdAt))
+          .limit(5);
 
-      return query;
+        return query;
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Fetch could not be performed.",
+        });
+      }
     }),
   addUserSearchHistory: publicProcedure
     .input(
@@ -182,6 +189,35 @@ export const mainRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Failed to add search history",
+        });
+      }
+    }),
+  getTagsInformation: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const tags = await db
+          .select({
+            id: tagTable.id,
+            name: tagTable.name,
+            colour: tagTable.colour,
+          })
+          .from(tagTable)
+          .where(
+            or(
+              eq(tagTable.userId, input.userId),
+              eq(tagTable.visibility, "public"),
+            ),
+          );
+        return tags;
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Fetch could not be performed.",
         });
       }
     }),

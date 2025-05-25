@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { ArrowUpLeft, Search } from "lucide-react";
 import { useModal } from "@/context/searchProvider";
 import { useObjectModal } from "@/context/objectProvider";
 import { useTRPC } from "@/utilities/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "./toaster/use-toast";
 import { useRouter } from "next/navigation";
+import { Tag } from "lucide-react";
 
 export default function SearchBar({ userId }: { userId: string | null }) {
   const { modal, setModal } = useModal();
@@ -55,12 +56,24 @@ type ModalProps = {
   onClose: () => void;
 };
 
+type History = {
+  id: string;
+  query: string;
+  createdAt: number;
+};
+
+type Tags = {
+  id: string;
+  name: string;
+  colour: string;
+}[];
+
 const Modal = ({ onClose, userId }: ModalProps) => {
   const router = useRouter();
-  const [history, setHistory] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const trpc = useTRPC();
-  const { data } = useQuery(
+
+  const { data, isLoading } = useQuery(
     trpc.main.getUserSearchHistory.queryOptions(
       { userId: userId ?? "" },
       {
@@ -84,9 +97,10 @@ const Modal = ({ onClose, userId }: ModalProps) => {
     trpc.main.addUserSearchHistory.mutationOptions(mutationOptions),
   );
 
-  useEffect(() => {
-    if (data) setHistory(data.map((item) => item.query));
-  }, [data]);
+  const handleHistory = (history: History[]) => {
+    const newHistory = history.map((item) => item.query);
+    return newHistory;
+  };
 
   const handleSearch = async () => {
     if (!query) return;
@@ -130,7 +144,12 @@ const Modal = ({ onClose, userId }: ModalProps) => {
               </span>
             </button>
           </div>
-          {history.length > 0 && <SearchHistory history={history} />}
+
+          {isLoading ? (
+            <div className="p-3 text-gray-500">Loading...</div>
+          ) : (
+            <SearchHistory history={handleHistory(data ?? [])} />
+          )}
         </div>
       </div>
     </div>
@@ -139,22 +158,18 @@ const Modal = ({ onClose, userId }: ModalProps) => {
 
 function SearchHistory({ history }: { history: string[] }) {
   return (
-    <div className="flex items-center gap-2 rounded-md bg-secondary px-2 py-1 text-sm">
+    <div className="flex flex-col gap-3 rounded-md bg-secondary text-sm">
+      <h1 className="p-3 text-lg">Search History</h1>
       {history.map((item, index) => (
-        <div
-          key={index}
-          className="flex items-center gap-2 rounded-md bg-secondary px-2 py-1 text-sm"
-        >
-          <Search className="h-3 w-3" />
-          <span>{item}</span>
+        <div key={index}>
+          <div className="cursor-pointer p-2 hover:bg-accent">
+            <div className="flex items-center justify-between px-3 py-1">
+              <span>{item}</span>
+              <ArrowUpLeft className="h-5 w-5 text-primary" />
+            </div>
+          </div>
         </div>
       ))}
     </div>
-  );
-}
-
-function TagList({ tags }: { tags: string[] }) {
-  return (
-    <div className="flex items-center gap-2 rounded-md bg-secondary px-2 py-1 text-sm"></div>
   );
 }

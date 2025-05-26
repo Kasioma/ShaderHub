@@ -50,6 +50,22 @@ export const mainRouter = createTRPCRouter({
         })
         .from(objectTable)
         .innerJoin(userTable, eq(objectTable.userId, userTable.id))
+        .leftJoin(
+          objectTagRelationTable,
+          eq(objectTable.id, objectTagRelationTable.objectId),
+        )
+        .leftJoin(tagTable, eq(objectTagRelationTable.tagId, tagTable.id))
+        .leftJoin(
+          attributeValueObjectRelationTable,
+          eq(objectTable.id, attributeValueObjectRelationTable.objectId),
+        )
+        .leftJoin(
+          attributeValueTable,
+          eq(
+            attributeValueObjectRelationTable.attributeId,
+            attributeValueTable.id,
+          ),
+        )
         .where(
           and(
             eq(objectTable.visibility, visibility.public),
@@ -62,6 +78,15 @@ export const mainRouter = createTRPCRouter({
               ? or(
                   ...querySplit.map((item) =>
                     ilike(objectTable.name, `%${item}%`),
+                  ),
+                  ...querySplit.map((item) =>
+                    and(
+                      ilike(tagTable.name, `${item}`),
+                      eq(tagTable.visibility, visibility.public),
+                    ),
+                  ),
+                  ...querySplit.map((item) =>
+                    and(ilike(attributeValueTable.value, `${item}`)),
                   ),
                 )
               : undefined,

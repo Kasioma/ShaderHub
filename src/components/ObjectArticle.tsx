@@ -1,5 +1,4 @@
-import type { ParsedModelProps } from "@/utilities/types";
-import { cn, unzipFiles, downloadZip } from "@/utilities/utils";
+import { cn, downloadZip } from "@/utilities/utils";
 import { Download } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";

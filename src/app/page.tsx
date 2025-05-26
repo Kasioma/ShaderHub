@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import ObjectGrid from "@/components/ObjectGrid";
+import TagRow from "@/components/TagRow";
 
 type User = {
   id: string;
@@ -20,6 +21,8 @@ export default async function Home() {
     return null;
   };
 
+  const user = await getUserData();
+
   return (
     <HydrateClient>
       <main className="dark">
@@ -27,8 +30,9 @@ export default async function Home() {
           <Header user={null} />
         </SignedOut>
         <SignedIn>
-          <Header user={await getUserData()} />
+          <Header user={user} />
         </SignedIn>
+        <TagRow userId={user?.id ?? null} />
         <ObjectGrid />
       </main>
     </HydrateClient>

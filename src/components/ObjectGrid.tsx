@@ -126,20 +126,18 @@ export default function ObjectGrid({ query }: Props) {
     setPageIndex((prev) => prev - 1);
   };
   return (
-    <>
-      <section className="mx-auto mt-5 w-10/12">
-        <Objects objects={currentObjects} thumbnails={thumbnails} />
-        <div className="mx-auto mt-4 flex w-fit justify-between gap-5 text-xl text-text">
-          <button onClick={handlePrevious}>
-            <CircleChevronLeft />
-          </button>
-          <span>{pageIndex + 1}</span>
-          <button onClick={handleNext}>
-            <CircleChevronRight />
-          </button>
-        </div>
-      </section>
-    </>
+    <section className="mx-auto mt-5 w-10/12">
+      <Objects objects={currentObjects} thumbnails={thumbnails} />
+      <div className="mx-auto mt-4 flex w-fit justify-between gap-5 pb-10 text-xl text-text">
+        <button onClick={handlePrevious}>
+          <CircleChevronLeft />
+        </button>
+        <span>{pageIndex + 1}</span>
+        <button onClick={handleNext}>
+          <CircleChevronRight />
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -171,7 +169,7 @@ function Objects({ objects, thumbnails }: ObjectsProps) {
           })}
         </div>
       ) : (
-        <div className="flex min-h-[75vh] w-full flex-col items-center justify-center gap-4 text-text opacity-70">
+        <div className="flex min-h-[70vh] w-full flex-col items-center justify-center gap-4 text-text opacity-70">
           <Cog
             className="h-16 w-16 animate-spin"
             style={{ animationDuration: "9s" }}

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpLeft, Search } from "lucide-react";
 import { useModal } from "@/context/searchProvider";
 import { useObjectModal } from "@/context/objectProvider";
@@ -45,13 +45,16 @@ export default function SearchBar({ userId }: { userId: string | null }) {
         <Search className="h-3 w-3" />
         <span>Ctrl K</span>
       </div>
-      {modal && <Modal onClose={handleModalClose} userId={userId} />}
+      {modal && (
+        <Modal onClose={handleModalClose} userId={userId} isOpen={modal} />
+      )}
     </>
   );
 }
 
 type ModalProps = {
   userId: string | null;
+  isOpen: boolean;
   onClose: () => void;
 };
 
@@ -61,10 +64,19 @@ type History = {
   createdAt: number;
 };
 
-const Modal = ({ onClose, userId }: ModalProps) => {
+const Modal = ({ onClose, userId, isOpen }: ModalProps) => {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const trpc = useTRPC();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  }, [isOpen]);
 
   const { data, isLoading } = useQuery(
     trpc.main.getUserSearchHistory.queryOptions(
@@ -122,6 +134,7 @@ const Modal = ({ onClose, userId }: ModalProps) => {
           <div className="flex items-center gap-4 px-5 py-4">
             <Search className="h-3 w-3" />
             <input
+              ref={inputRef}
               type="text"
               placeholder="Search..."
               className="w-full bg-inherit text-sm outline-none"

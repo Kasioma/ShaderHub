@@ -42,6 +42,7 @@ export default function ObjectGrid({ query }: Props) {
         limit: 20,
         cursor: undefined,
         direction,
+        query,
       },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,

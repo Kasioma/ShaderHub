@@ -13,7 +13,7 @@ import {
   tagTable,
   userTable,
 } from "@/server/db/schema";
-import { eq, and, desc, asc, lt, gt, or } from "drizzle-orm";
+import { eq, and, desc, asc, lt, gt, or, ilike } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 
@@ -30,12 +30,15 @@ export const mainRouter = createTRPCRouter({
         limit: z.number().min(1).max(100).default(20),
         cursor: z.number().nullish(),
         direction: z.enum(["forward", "backward"]).default("forward"),
+        query: z.string().nullish(),
       }),
     )
     .query(async ({ input }) => {
       const limit = input.limit ?? 20;
       const cursor = input.cursor;
       const direction = input.direction;
+      const querySplit = input.query?.split(" ") ?? [];
+      console.log(querySplit);
 
       const query = await db
         .select({
@@ -54,6 +57,13 @@ export const mainRouter = createTRPCRouter({
               ? direction === "forward"
                 ? lt(objectTable.createdAt, cursor)
                 : gt(objectTable.createdAt, cursor)
+              : undefined,
+            input.query
+              ? or(
+                  ...querySplit.map((item) =>
+                    ilike(objectTable.name, `%${item}%`),
+                  ),
+                )
               : undefined,
           ),
         )

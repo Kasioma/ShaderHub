@@ -7,7 +7,6 @@ import { useTRPC } from "@/utilities/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "./toaster/use-toast";
 import { useRouter } from "next/navigation";
-import { Tag } from "lucide-react";
 
 export default function SearchBar({ userId }: { userId: string | null }) {
   const { modal, setModal } = useModal();
@@ -61,12 +60,6 @@ type History = {
   query: string;
   createdAt: number;
 };
-
-type Tags = {
-  id: string;
-  name: string;
-  colour: string;
-}[];
 
 const Modal = ({ onClose, userId }: ModalProps) => {
   const router = useRouter();
@@ -148,7 +141,10 @@ const Modal = ({ onClose, userId }: ModalProps) => {
           {isLoading ? (
             <div className="p-3 text-gray-500">Loading...</div>
           ) : (
-            <SearchHistory history={handleHistory(data ?? [])} />
+            <SearchHistory
+              history={handleHistory(data ?? [])}
+              onClose={onClose}
+            />
           )}
         </div>
       </div>
@@ -156,13 +152,30 @@ const Modal = ({ onClose, userId }: ModalProps) => {
   );
 };
 
-function SearchHistory({ history }: { history: string[] }) {
+type SearchHistoryProps = {
+  history: string[];
+  onClose: () => void;
+};
+
+function SearchHistory({ history, onClose }: SearchHistoryProps) {
+  const router = useRouter();
+
+  const handleSearch = (query: string) => {
+    if (!query) return;
+    const encodedQuery = encodeURIComponent(query);
+    router.push(`/search?query=${encodedQuery}`);
+    onClose();
+  };
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-secondary text-sm">
       <h1 className="p-3 text-lg">Search History</h1>
       {history.map((item, index) => (
         <div key={index}>
-          <div className="cursor-pointer p-2 hover:bg-accent">
+          <div
+            className="cursor-pointer p-2 hover:bg-[#334155]"
+            onClick={() => handleSearch(item)}
+          >
             <div className="flex items-center justify-between px-3 py-1">
               <span>{item}</span>
               <ArrowUpLeft className="h-5 w-5 text-primary" />

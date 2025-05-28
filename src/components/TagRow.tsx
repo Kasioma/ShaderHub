@@ -4,8 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useModal } from "@/context/searchProvider";
+import { cn } from "@/utilities/utils";
 
 export default function TagRow({ userId }: { userId: string | null }) {
+  const { modal } = useModal();
   const router = useRouter();
   const trpc = useTRPC();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -37,10 +40,13 @@ export default function TagRow({ userId }: { userId: string | null }) {
     const el = scrollRef.current;
     if (!el) return;
 
-    handleScroll();
+    requestAnimationFrame(() => {
+      handleScroll();
+    });
+
     el.addEventListener("scroll", handleScroll);
     return () => el.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [data]);
 
   const handleClick = (tagName: string) => {
     const encodedQuery = encodeURIComponent(tagName);
@@ -48,7 +54,7 @@ export default function TagRow({ userId }: { userId: string | null }) {
   };
 
   return (
-    <div className="relative mx-auto my-10 w-10/12 ">
+    <div className={cn("relative mx-auto my-10 w-10/12", { "-z-10": modal })}>
       {!atStart && (
         <button
           className="absolute left-0 top-1/2 z-50 -translate-y-1/2 rounded-full bg-secondary p-2 opacity-50"
@@ -70,6 +76,20 @@ export default function TagRow({ userId }: { userId: string | null }) {
                   backgroundColor: colours[Math.floor(Math.random() * 5)],
                 }}
                 onClick={() => handleClick(tag.name)}
+              >
+                {tag.name}
+              </span>
+            </div>
+          );
+        })}
+        {data?.map((tag) => {
+          return (
+            <div key={tag.id}>
+              <span
+                className="bold cursor-pointer rounded-md p-3 text-text"
+                style={{
+                  backgroundColor: colours[Math.floor(Math.random() * 5)],
+                }}
               >
                 {tag.name}
               </span>

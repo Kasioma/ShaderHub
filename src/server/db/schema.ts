@@ -1,5 +1,5 @@
 import { type InferSelectModel } from "drizzle-orm";
-import { integer, pgTable, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 import { type Visibility } from "@/utilities/types";
 
 export const userTable = pgTable("users", {
@@ -134,4 +134,20 @@ export const searchHistoryTable = pgTable("search_history", {
 
 export type SearchHistory = InferSelectModel<typeof searchHistoryTable>;
 
-
+export const collectionsTable = pgTable(
+  "collections",
+  {
+    objectId: text("object_id").references(() => objectTable.id, {
+      onDelete: "cascade",
+    }),
+    tagId: text("tag_id").references(() => tagTable.id, {
+      onDelete: "cascade",
+    }),
+    userId: text("user_id").references(() => userTable.id, {
+      onDelete: "cascade",
+    }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.objectId, table.tagId, table.userId] }),
+  ],
+);

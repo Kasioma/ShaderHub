@@ -7,6 +7,7 @@ import {
   attributeTypeTable,
   attributeValueObjectRelationTable,
   attributeValueTable,
+  collectionsTable,
   objectTable,
   objectTagRelationTable,
   searchHistoryTable,
@@ -132,6 +133,7 @@ export const mainRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
+      const userId = await isSignedIn();
       try {
         const tags = await db
           .select({
@@ -168,7 +170,21 @@ export const mainRouter = createTRPCRouter({
             eq(attributeValueObjectRelationTable.objectId, input.objectId),
           );
 
-        return { tags, attributes };
+        const favouriteTagId = "tag-5";
+        const parsedUserId = z.string().parse(userId);
+
+        const toggleCheck = await db
+          .select()
+          .from(collectionsTable)
+          .where(
+            and(
+              eq(collectionsTable.objectId, input.objectId),
+              eq(collectionsTable.userId, parsedUserId),
+              eq(collectionsTable.tagId, favouriteTagId),
+            ),
+          );
+
+        return { tags, attributes, favourite: toggleCheck.length > 0 };
       } catch {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -212,7 +228,6 @@ export const mainRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       try {
-        console.log(input);
         if (!input.userId) return;
         await db.insert(searchHistoryTable).values({
           id: nanoid(),
@@ -256,4 +271,72 @@ export const mainRouter = createTRPCRouter({
         });
       }
     }),
+  toggleFavouriteTag: publicProcedure
+    .input(
+      z.object({
+        objectId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const userId = await isSignedIn();
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be signed in to use this route.",
+        });
+      }
+      try {
+        const parsedUserId = z.string().parse(userId);
+        const favouriteTagId = "tag-5";
+        const whereCondition = and(
+          eq(collectionsTable.objectId, input.objectId),
+          eq(collectionsTable.userId, parsedUserId),
+          eq(collectionsTable.tagId, favouriteTagId),
+        );
+
+        const toggleCheck = await db
+          .select()
+          .from(collectionsTable)
+          .where(whereCondition);
+
+        if (toggleCheck.length > 0) {
+          await db.delete(collectionsTable).where(whereCondition);
+          return false;
+        } else {
+          await db.insert(collectionsTable).values({
+            objectId: input.objectId,
+            userId: parsedUserId,
+            tagId: favouriteTagId,
+          });
+          return true;
+        }
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to add favourite tag.",
+        });
+      }
+    }),
+  getAllUserCollections: publicProcedure.query(async () => {
+    const userId = await isSignedIn();
+    if (!userId) {
+      return [];
+    }
+    try {
+      const parsedUserId = z.string().parse(userId);
+      const collections = await db
+        .select({
+          objectId: collectionsTable.objectId,
+          tagId: collectionsTable.tagId,
+        })
+        .from(collectionsTable)
+        .where(eq(collectionsTable.userId, parsedUserId));
+      return collections;
+    } catch {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Failed to get all user collections.",
+      });
+    }
+  }),
 });

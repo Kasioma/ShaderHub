@@ -125,6 +125,7 @@ export default function ObjectGrid({ query }: Props) {
     }
     setPageIndex((prev) => prev - 1);
   };
+
   return (
     <section className="mx-auto mt-5 w-10/12">
       <Objects objects={currentObjects} thumbnails={thumbnails} />

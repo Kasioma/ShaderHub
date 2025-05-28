@@ -54,10 +54,14 @@ export default function TagRow({ userId }: { userId: string | null }) {
   };
 
   return (
-    <div className={cn("relative mx-auto my-10 w-10/12", { "-z-10": modal })}>
+    <div
+      className={cn("relative mx-auto my-10 w-10/12", {
+        "-z-10": modal,
+      })}
+    >
       {!atStart && (
         <button
-          className="absolute left-0 top-1/2 z-50 -translate-y-1/2 rounded-full bg-secondary p-2 opacity-50"
+          className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-secondary p-2 opacity-50"
           onClick={() => scroll("left")}
         >
           <ChevronLeft />
@@ -155,7 +159,7 @@ export default function TagRow({ userId }: { userId: string | null }) {
       </div>
       {!atEnd && (
         <button
-          className="absolute right-0 top-1/2 z-50 -translate-y-1/2 rounded-full bg-secondary p-2 opacity-50"
+          className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-secondary p-2 opacity-50"
           onClick={() => scroll("right")}
         >
           <ChevronRight />

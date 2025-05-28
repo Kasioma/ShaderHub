@@ -12,10 +12,11 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { downloadZip, unzipFiles } from "@/utilities/utils";
-import type { ParsedModelProps } from "@/utilities/types";
-import { useQuery } from "@tanstack/react-query";
+import { cn, downloadZip, unzipFiles } from "@/utilities/utils";
+import type { ParsedModelProps, ViewType } from "@/utilities/types";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";
+import { toast } from "./toaster/use-toast";
 
 type Props = {
   modelBlob: Blob;
@@ -35,14 +36,38 @@ export default function ModelModal({
   onClose,
 }: Props) {
   const trpc = useTRPC();
-  const { objectModal, setObjectModal } = useObjectModal();
+  const { objectModal } = useObjectModal();
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [parsedObject, setParsedObject] = useState<ParsedModelProps | null>(
     null,
   );
-  const { data } = useQuery(
+  const [favourite, setFavourite] = useState(false);
+  const [view, setView] = useState<ViewType>("details");
+  const { data: objectData } = useQuery(
     trpc.main.getObjectInformation.queryOptions({ objectId: objectId }),
   );
+
+  const { data: collections } = useQuery(
+    trpc.main.getAllUserCollections.queryOptions(),
+  );
+
+  const mutationOptions = {
+    onError(error: { message: string }) {
+      toast({
+        variant: "destructive",
+        title: "Server error",
+        description: error.message,
+      });
+    },
+  };
+
+  const favouriteMutation = useMutation(
+    trpc.main.toggleFavouriteTag.mutationOptions(mutationOptions),
+  );
+
+  useEffect(() => {
+    if (objectData?.favourite) setFavourite(true);
+  }, [objectData]);
 
   useEffect(() => {
     const fetchPicture = async () => {
@@ -101,6 +126,15 @@ export default function ModelModal({
     downloadZip(modelBlob);
   };
 
+  const handleFavourite = async () => {
+    setFavourite(await favouriteMutation.mutateAsync({ objectId }));
+  };
+
+  const handleCollection = () => {
+    const newView = view === "details" ? "collection" : "details";
+    setView(newView);
+  };
+
   return objectModal ? (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -134,31 +168,44 @@ export default function ModelModal({
               <p></p>
             </div>
             <div className="flex gap-3">
-              <div>
+              <div className="h-6 w-6">
                 <Download
                   className="h-5 w-5 cursor-pointer"
                   onClick={() => handleDownload()}
                 />
               </div>
-              <div>
+              <div
+                onClick={() => handleFavourite()}
+                className={cn(
+                  "flex h-6 w-6 cursor-pointer items-center justify-center rounded-full",
+                  {
+                    "bg-[#FFB900]": favourite,
+                  },
+                )}
+              >
                 <Star className="h-5 w-5 cursor-pointer" />
               </div>
-              <div>
+              <div onClick={() => handleCollection()} className="h-6 w-6 ">
                 <Bookmark className="h-5 w-5 cursor-pointer" />
               </div>
             </div>
           </div>
         </div>
-        <div className="relative flex w-2/6 flex-col items-center justify-center gap-10">
-          <div className="flex w-[90%] flex-col items-center gap-2">
-            <h3 className="bold text-xl">Tags</h3>
-            <TagList tags={data?.tags ?? []} />
+        {view === "details" && (
+          <div className="relative flex w-2/6 flex-col items-center justify-center gap-10">
+            <div className="flex w-[90%] flex-col items-center gap-2">
+              <h3 className="bold text-xl">Tags</h3>
+              <TagList tags={objectData?.tags ?? []} />
+            </div>
+            <div className="flex w-[90%] flex-col items-center gap-2">
+              <h3 className="bold text-xl">Attributes</h3>
+              <AttributeList attributes={objectData?.attributes ?? []} />
+            </div>
           </div>
-          <div className="flex w-[90%] flex-col items-center gap-2">
-            <h3 className="bold text-xl">Attributes</h3>
-            <AttributeList attributes={data?.attributes ?? []} />
-          </div>
-        </div>
+        )}
+        {view === "collection" && (
+          <div className="relative flex w-2/6 flex-col items-center justify-center gap-10"></div>
+        )}
         <X
           onClick={onClose}
           className="absolute right-5 top-5 h-5 w-5 cursor-pointer text-text"

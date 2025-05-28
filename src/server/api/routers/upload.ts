@@ -10,7 +10,7 @@ import {
   attributeValueTable,
   attributeValueObjectRelationTable,
 } from "@/server/db/schema";
-import { eq, or, and } from "drizzle-orm";
+import { eq, or, and, ne } from "drizzle-orm";
 import { z } from "zod";
 import { uploadObjectSchema } from "@/utilities/zod/parsers";
 import { nanoid } from "nanoid";
@@ -38,26 +38,30 @@ export const uploadRouter = createTRPCRouter({
           tag: tagTable,
           attributes: attributeTypeTable,
         })
-        .from(attributeTypeTagRelationTable)
+        .from(tagTable)
         .leftJoin(
-          tagTable,
-          and(
-            eq(attributeTypeTagRelationTable.tagId, tagTable.id),
-            or(
-              eq(tagTable.userId, parsedUserId),
-              eq(tagTable.visibility, "public"),
-            ),
-          ),
+          attributeTypeTagRelationTable,
+          eq(tagTable.id, attributeTypeTagRelationTable.tagId),
         )
         .leftJoin(
           attributeTypeTable,
           eq(attributeTypeTagRelationTable.attributeId, attributeTypeTable.id),
+        )
+        .where(
+          and(
+            or(
+              eq(tagTable.userId, parsedUserId),
+              eq(tagTable.visibility, "public"),
+            ),
+            ne(tagTable.name, "Favourite"),
+          ),
         );
       if (!tagsAndAttributes)
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Query failed.",
         });
+
       const result = new Map<
         string,
         {
@@ -67,15 +71,15 @@ export const uploadRouter = createTRPCRouter({
       >();
 
       for (const entry of tagsAndAttributes) {
-        if (!entry.tag || !entry.attributes) continue;
+        if (!entry.tag) continue;
 
         const existingEntry = result.get(entry.tag.id);
-        if (existingEntry) {
+        if (existingEntry && entry.attributes) {
           existingEntry.attributes.push(entry.attributes);
         } else {
           result.set(entry.tag.id, {
             tag: entry.tag,
-            attributes: [entry.attributes],
+            attributes: entry.attributes ? [entry.attributes] : [],
           });
         }
       }

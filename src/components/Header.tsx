@@ -1,10 +1,11 @@
 "use client";
 import Image from "next/image";
 import SearchBar from "./SearchBar";
-import { useState } from "react";
 import Link from "next/link";
 import { SignInButton, SignOutButton } from "@clerk/nextjs";
 import { Box, CircleUserRound, Upload } from "lucide-react";
+import { DropdownPortal } from "./DropdownPortal";
+import { useState } from "react";
 
 type User = {
   id: string;
@@ -47,7 +48,11 @@ export default function Header({ user }: Props) {
           <div onClick={() => setShowProfile(!showProfile)}>
             <ProfilePicture user={user} />
           </div>
-          {showProfile && <Profile user={user} />}
+          {showProfile && (
+            <DropdownPortal>
+              <Profile user={user} />
+            </DropdownPortal>
+          )}
         </div>
       </div>
     </header>
@@ -69,7 +74,7 @@ const ProfilePicture = ({ user }: Props) => {
 
 const Profile = ({ user }: Props) => {
   return (
-    <div className="bg-background-700 border-primary-50 absolute left-[25%] top-[100%] mt-2 flex w-3/4 flex-col rounded-md border">
+    <div className="border-primary-50 absolute right-[1%] top-[8%] z-50 mt-2 flex w-1/4 max-w-[300px] flex-col rounded-md border bg-background">
       <Link href="" className="hover:bg-background-600 w-full rounded-t-md p-2">
         Profile
       </Link>

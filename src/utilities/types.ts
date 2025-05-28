@@ -23,6 +23,13 @@ export const direction = Object.freeze({
 
 export type Direction = (typeof direction)[keyof typeof direction];
 
+export const viewType = Object.freeze({
+  details: "details",
+  collection: "collection",
+} as const);
+
+export type ViewType = (typeof viewType)[keyof typeof viewType];
+
 export type ParseGLTFProps = {
   kind: "gltf";
   fileType: SupportedLoaders;

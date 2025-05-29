@@ -46,3 +46,7 @@ const ThumbnailObjectSchema = z.object({
 });
 
 export const ThumbnailsResponseSchema = z.array(ThumbnailObjectSchema);
+
+export const checkStateSchema = z.record(z.boolean());
+
+export type CheckState = z.infer<typeof checkStateSchema>;

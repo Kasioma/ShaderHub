@@ -38,17 +38,23 @@ export default function ModelModal({
   const trpc = useTRPC();
   const { objectModal } = useObjectModal();
   const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [tagName, setTagName] = useState("");
+  const [tagColor, setTagColor] = useState("#000000");
   const [parsedObject, setParsedObject] = useState<ParsedModelProps | null>(
     null,
   );
   const [favourite, setFavourite] = useState(false);
+  const [initialCheckedTags, setInitialCheckedTags] = useState<
+    Record<string, boolean>
+  >({});
+  const [checkedTags, setCheckedTags] = useState<Record<string, boolean>>({});
   const [view, setView] = useState<ViewType>("details");
   const { data: objectData } = useQuery(
     trpc.main.getObjectInformation.queryOptions({ objectId: objectId }),
   );
 
-  const { data: collections } = useQuery(
-    trpc.main.getAllUserCollections.queryOptions(),
+  const { data: collectionsData } = useQuery(
+    trpc.main.getAllUserCollections.queryOptions({ objectId: objectId }),
   );
 
   const mutationOptions = {
@@ -63,6 +69,14 @@ export default function ModelModal({
 
   const favouriteMutation = useMutation(
     trpc.main.toggleFavouriteTag.mutationOptions(mutationOptions),
+  );
+
+  const addToCollectionMutation = useMutation(
+    trpc.main.addToCollection.mutationOptions(mutationOptions),
+  );
+
+  const createCollectionMutation = useMutation(
+    trpc.main.createCollection.mutationOptions(mutationOptions),
   );
 
   useEffect(() => {
@@ -96,6 +110,18 @@ export default function ModelModal({
     }
     parseModel().catch(console.error);
   }, [modelBlob]);
+
+  useEffect(() => {
+    const initialState: Record<string, boolean> = {};
+    collectionsData?.usedTags.forEach((tag) => {
+      const isChecked = collectionsData?.objectTags.some(
+        (objectTag) => objectTag.tagId === tag.tagId,
+      );
+      if (tag.tagId) initialState[tag.tagId] = isChecked;
+    });
+    setCheckedTags(initialState);
+    setInitialCheckedTags(initialState);
+  }, [collectionsData]);
 
   const handleTextures = (textures: Map<string, Blob>) => {
     const result = new Map<string, string>();
@@ -133,6 +159,46 @@ export default function ModelModal({
   const handleCollection = () => {
     const newView = view === "details" ? "collection" : "details";
     setView(newView);
+  };
+
+  const handleChangeTag = (tagId: string) => {
+    setCheckedTags((prevState) => ({
+      ...prevState,
+      [tagId]: !prevState[tagId],
+    }));
+  };
+
+  const handleAdd = async () => {
+    const changes: Record<string, boolean> = {};
+
+    for (const tagId in checkedTags) {
+      if (
+        checkedTags[tagId] !== undefined &&
+        checkedTags[tagId] !== initialCheckedTags[tagId]
+      ) {
+        changes[tagId] = checkedTags[tagId]!;
+      }
+    }
+    await addToCollectionMutation.mutateAsync({
+      objectId,
+      checkedTags: changes,
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!tagName.trim()) return;
+
+    await createCollectionMutation.mutateAsync({
+      objectId,
+      tagName,
+      tagColor,
+    });
+
+    setView("collection");
+  };
+
+  const handleCreateView = () => {
+    setView("create");
   };
 
   return objectModal ? (
@@ -204,8 +270,57 @@ export default function ModelModal({
           </div>
         )}
         {view === "collection" && (
-          <div className="relative flex w-2/6 flex-col items-center justify-center gap-10"></div>
+          <div className="relative flex w-2/6 flex-col items-center justify-center gap-10">
+            <CollectionList
+              usedTags={collectionsData?.usedTags ?? []}
+              checkedTags={checkedTags}
+              handleChangeTag={handleChangeTag}
+              handleAdd={handleAdd}
+              handleCreate={handleCreateView}
+            />
+          </div>
         )}
+        {view === "create" && (
+          <div className="relative flex w-2/6 flex-col items-center justify-center gap-10">
+            <input
+              type="text"
+              placeholder="Enter tag name"
+              value={tagName}
+              onChange={(e) => setTagName(e.target.value)}
+              className="w-3/4 border-b bg-inherit text-xl outline-none"
+            />
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="colorPicker" className="text-sm">
+                Tag Color:
+              </label>
+              <input
+                type="color"
+                id="colorPicker"
+                value={tagColor}
+                onChange={(e) => setTagColor(e.target.value)}
+                className="h-6 w-6 cursor-pointer rounded-full border"
+              />
+              <span className="text-sm">{tagColor}</span>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setView("collection")}
+                className="rounded-full bg-primary px-4 py-1 text-secondary hover:bg-primary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-1 rounded-md border px-4 py-1"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        )}
+
         <X
           onClick={onClose}
           className="absolute right-5 top-5 h-5 w-5 cursor-pointer text-text"
@@ -279,6 +394,68 @@ function AttributeList({ attributes }: { attributes: AttributeType[] }) {
             </div>
           ))
         : null}
+    </div>
+  );
+}
+
+type CollectionTags = {
+  tagId: string | null;
+  tagName: string | null;
+};
+
+type CollectionListProps = {
+  usedTags: CollectionTags[];
+  checkedTags: Record<string, boolean>;
+  handleChangeTag: (tagId: string) => void;
+  handleAdd: () => void;
+  handleCreate: () => void;
+};
+
+function CollectionList({
+  usedTags,
+  checkedTags,
+  handleChangeTag,
+  handleAdd,
+  handleCreate,
+}: CollectionListProps) {
+  return (
+    <div className="flex flex-col justify-between gap-2">
+      <div className="max-h-[300px] overflow-y-auto rounded-md border p-2">
+        {usedTags.length > 0 ? (
+          usedTags.map((usedTag) => (
+            <label
+              key={usedTag.tagId}
+              className="flex items-center gap-2 rounded p-1"
+            >
+              <input
+                type="checkbox"
+                checked={checkedTags[usedTag.tagId ?? ""]}
+                onChange={() => handleChangeTag(usedTag.tagId ?? "")}
+              />
+              <span>{usedTag.tagName}</span>
+            </label>
+          ))
+        ) : (
+          <p className="text-sm">No tags available</p>
+        )}
+      </div>
+
+      {usedTags.length > 0 && (
+        <div className="flex gap-2">
+          <button
+            className="rounded-full bg-primary px-4 py-1 text-secondary hover:bg-primary"
+            onClick={handleAdd}
+          >
+            Add
+          </button>
+          <button
+            className="flex items-center gap-1 rounded-md border px-4 py-1"
+            onClick={handleCreate}
+          >
+            <span>Create</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

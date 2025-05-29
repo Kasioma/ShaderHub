@@ -26,6 +26,7 @@ export type Direction = (typeof direction)[keyof typeof direction];
 export const viewType = Object.freeze({
   details: "details",
   collection: "collection",
+  create: "create",
 } as const);
 
 export type ViewType = (typeof viewType)[keyof typeof viewType];

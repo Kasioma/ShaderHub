@@ -47,3 +47,11 @@ export type ParseFBXProps = {
 };
 
 export type ParsedModelProps = ParseGLTFProps | ParseFBXProps;
+
+export type SelectedFileProps = {
+  tagName: string;
+  userId: string;
+  uploaderId: string;
+  objectId: string;
+  objectName: string;
+};

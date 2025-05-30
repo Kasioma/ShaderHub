@@ -137,15 +137,21 @@ export type SearchHistory = InferSelectModel<typeof searchHistoryTable>;
 export const collectionsTable = pgTable(
   "collections",
   {
-    objectId: text("object_id").references(() => objectTable.id, {
-      onDelete: "cascade",
-    }),
-    tagId: text("tag_id").references(() => tagTable.id, {
-      onDelete: "cascade",
-    }),
-    userId: text("user_id").references(() => userTable.id, {
-      onDelete: "cascade",
-    }),
+    objectId: text("object_id")
+      .references(() => objectTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    tagId: text("tag_id")
+      .references(() => tagTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    userId: text("user_id")
+      .references(() => userTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.objectId, table.tagId, table.userId] }),

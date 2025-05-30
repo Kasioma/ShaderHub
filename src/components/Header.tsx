@@ -4,7 +4,7 @@ import SearchBar from "./SearchBar";
 import Link from "next/link";
 import { SignInButton, SignOutButton } from "@clerk/nextjs";
 import { Box, CircleUserRound, Upload } from "lucide-react";
-import { DropdownPortal } from "./DropdownPortal";
+import { Portal } from "./Portal";
 import { useState } from "react";
 
 type User = {
@@ -49,9 +49,9 @@ export default function Header({ user }: Props) {
             <ProfilePicture user={user} />
           </div>
           {showProfile && (
-            <DropdownPortal>
+            <Portal>
               <Profile user={user} />
-            </DropdownPortal>
+            </Portal>
           )}
         </div>
       </div>
@@ -78,7 +78,7 @@ const Profile = ({ user }: Props) => {
       <Link href="" className="hover:bg-background-600 w-full rounded-t-md p-2">
         Profile
       </Link>
-      <Link href="" className="hover:bg-background-600 w-full p-2">
+      <Link href="/library" className="hover:bg-background-600 w-full p-2">
         Library
       </Link>
       <Link href="" className="hover:bg-background-600 w-full p-2">

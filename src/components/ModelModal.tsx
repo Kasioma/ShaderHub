@@ -3,20 +3,14 @@ import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import PreviewModel from "./PreviewModel";
 import { useObjectModal } from "@/context/objectProvider";
-import {
-  Bookmark,
-  CircleUserRound,
-  Download,
-  Star,
-  Tag,
-  X,
-} from "lucide-react";
-import Image from "next/image";
+import { Bookmark, Download, Star, Tag, X } from "lucide-react";
 import { cn, downloadZip, unzipFiles } from "@/utilities/utils";
 import type { ParsedModelProps, ViewType } from "@/utilities/types";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";
 import { toast } from "./toaster/use-toast";
+import { ProfilePicture } from "./ProfilePicture";
+import CollectionList from "./CollectionList";
 
 type Props = {
   modelBlob: Blob;
@@ -330,26 +324,6 @@ export default function ModelModal({
   ) : null;
 }
 
-type ProfilePictureProps = {
-  imageUrl: string | null;
-};
-
-const ProfilePicture = ({ imageUrl }: ProfilePictureProps) => {
-  if (!imageUrl) {
-    return <CircleUserRound className="h-[40px] w-[40px]" />;
-  }
-
-  return (
-    <Image
-      src={imageUrl}
-      alt="Profile Picture"
-      width={40}
-      height={40}
-      className="rounded-full"
-    />
-  );
-};
-
 type TagType = {
   id: string;
   name: string;
@@ -394,68 +368,6 @@ function AttributeList({ attributes }: { attributes: AttributeType[] }) {
             </div>
           ))
         : null}
-    </div>
-  );
-}
-
-type CollectionTags = {
-  tagId: string | null;
-  tagName: string | null;
-};
-
-type CollectionListProps = {
-  usedTags: CollectionTags[];
-  checkedTags: Record<string, boolean>;
-  handleChangeTag: (tagId: string) => void;
-  handleAdd: () => void;
-  handleCreate: () => void;
-};
-
-function CollectionList({
-  usedTags,
-  checkedTags,
-  handleChangeTag,
-  handleAdd,
-  handleCreate,
-}: CollectionListProps) {
-  return (
-    <div className="flex flex-col justify-between gap-2">
-      <div className="max-h-[300px] overflow-y-auto rounded-md border p-2">
-        {usedTags.length > 0 ? (
-          usedTags.map((usedTag) => (
-            <label
-              key={usedTag.tagId}
-              className="flex items-center gap-2 rounded p-1"
-            >
-              <input
-                type="checkbox"
-                checked={checkedTags[usedTag.tagId ?? ""]}
-                onChange={() => handleChangeTag(usedTag.tagId ?? "")}
-              />
-              <span>{usedTag.tagName}</span>
-            </label>
-          ))
-        ) : (
-          <p className="text-sm">No tags available</p>
-        )}
-      </div>
-
-      {usedTags.length > 0 && (
-        <div className="flex gap-2">
-          <button
-            className="rounded-full bg-primary px-4 py-1 text-secondary hover:bg-primary"
-            onClick={handleAdd}
-          >
-            Add
-          </button>
-          <button
-            className="flex items-center gap-1 rounded-md border px-4 py-1"
-            onClick={handleCreate}
-          >
-            <span>Create</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 }

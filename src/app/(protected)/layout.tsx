@@ -30,7 +30,7 @@ export default async function layout({ children }: Props) {
       <div>
         <Header user={await getUserData()}></Header>
       </div>
-      <div className="overflow-auto">{children}</div>
+      <div className="min-h-0 overflow-auto">{children}</div>
     </div>
   );
 }

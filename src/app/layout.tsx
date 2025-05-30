@@ -11,6 +11,7 @@ import { ModalContextProvider } from "@/context/searchProvider";
 import { ClientProvider } from "@/context/clientProvider";
 import { Toaster } from "@/components/toaster/toaster";
 import { ObjectModalContextProvider } from "@/context/objectProvider";
+import { CollectionContextProvider } from "@/context/collectionProvider";
 
 export const metadata: Metadata = {
   title: "ShaderHub",
@@ -31,15 +32,17 @@ export default function RootLayout({
       <ThemeContextProvider>
         <ModalContextProvider>
           <ObjectModalContextProvider>
-            <html lang="en" className={`${geist.variable}`}>
-              <body>
-                <ClientProvider>
-                  <TRPCReactProvider>{children}</TRPCReactProvider>
-                  <Toaster />
-                  <TailwindIndicator />
-                </ClientProvider>
-              </body>
-            </html>
+            <CollectionContextProvider>
+              <html lang="en" className={`${geist.variable}`}>
+                <body>
+                  <ClientProvider>
+                    <TRPCReactProvider>{children}</TRPCReactProvider>
+                    <Toaster />
+                    <TailwindIndicator />
+                  </ClientProvider>
+                </body>
+              </html>
+            </CollectionContextProvider>
           </ObjectModalContextProvider>
         </ModalContextProvider>
       </ThemeContextProvider>

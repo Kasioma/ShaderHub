@@ -50,3 +50,19 @@ export const ThumbnailsResponseSchema = z.array(ThumbnailObjectSchema);
 export const checkStateSchema = z.record(z.boolean());
 
 export type CheckState = z.infer<typeof checkStateSchema>;
+
+export const filePullSchema = z.record(
+  z.object({
+    tagName: z.string(),
+    objects: z.array(
+      z.object({
+        objectId: z.string(),
+        objectName: z.string(),
+        userId: z.string(),
+        uploaderId: z.string(),
+      }),
+    ),
+  }),
+);
+
+export type FilePull = z.infer<typeof filePullSchema>;

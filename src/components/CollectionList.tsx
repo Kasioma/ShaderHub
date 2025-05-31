@@ -8,7 +8,7 @@ type CollectionListProps = {
   checkedTags: Record<string, boolean>;
   handleChangeTag: (tagId: string) => void;
   handleAdd: () => void;
-  handleCreate: () => void;
+  handleCreateView: () => void;
 };
 
 export default function CollectionList({
@@ -16,25 +16,27 @@ export default function CollectionList({
   checkedTags,
   handleChangeTag,
   handleAdd,
-  handleCreate,
+  handleCreateView,
 }: CollectionListProps) {
   return (
     <div className="flex flex-col justify-between gap-2">
       <div className="max-h-[300px] overflow-y-auto rounded-md border p-2">
         {usedTags.length > 0 ? (
-          usedTags.map((usedTag) => (
-            <label
-              key={usedTag.tagId}
-              className="flex items-center gap-2 rounded p-1"
-            >
-              <input
-                type="checkbox"
-                checked={checkedTags[usedTag.tagId ?? ""]}
-                onChange={() => handleChangeTag(usedTag.tagId ?? "")}
-              />
-              <span>{usedTag.tagName}</span>
-            </label>
-          ))
+          usedTags.map((usedTag) =>
+            usedTag.tagName !== "Uploaded" ? (
+              <label
+                key={usedTag.tagId}
+                className="flex items-center gap-2 rounded p-1"
+              >
+                <input
+                  type="checkbox"
+                  checked={checkedTags[usedTag.tagId ?? ""]}
+                  onChange={() => handleChangeTag(usedTag.tagId ?? "")}
+                />
+                <span>{usedTag.tagName}</span>
+              </label>
+            ) : null,
+          )
         ) : (
           <p className="text-sm">No tags available</p>
         )}
@@ -50,7 +52,7 @@ export default function CollectionList({
           </button>
           <button
             className="flex items-center gap-1 rounded-md border px-4 py-1"
-            onClick={handleCreate}
+            onClick={handleCreateView}
           >
             <span>Create</span>
           </button>

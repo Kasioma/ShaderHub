@@ -191,10 +191,6 @@ export default function ModelModal({
     setView("collection");
   };
 
-  const handleCreateView = () => {
-    setView("create");
-  };
-
   return objectModal ? (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -270,7 +266,7 @@ export default function ModelModal({
               checkedTags={checkedTags}
               handleChangeTag={handleChangeTag}
               handleAdd={handleAdd}
-              handleCreate={handleCreateView}
+              handleCreateView={() => setView("create")}
             />
           </div>
         )}

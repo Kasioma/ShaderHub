@@ -18,24 +18,22 @@ type Props = {
   objectId: string;
   objectName: string;
   zip: Blob | null;
+  refetchLibrary: () => void;
 };
 
 export default function ObjectMenu({
   tagName,
-  userId,
   uploaderId,
   objectId,
   objectName,
   zip,
+  refetchLibrary,
 }: Props) {
   const { collection, setCollection } = useCollection();
   const trpc = useTRPC();
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [favourite, setFavourite] = useState(false);
-  const [tagColor, setTagColor] = useState("#000000");
-  const [newTagName, setNewTagName] = useState("");
   const [view, setView] = useState<ViewType>("collection");
-
   const [initialCheckedTags, setInitialCheckedTags] = useState<
     Record<string, boolean>
   >({});
@@ -56,6 +54,9 @@ export default function ObjectMenu({
         title: "Server error",
         description: error.message,
       });
+    },
+    onSuccess() {
+      refetchLibrary();
     },
   };
 
@@ -115,10 +116,6 @@ export default function ObjectMenu({
     setFavourite(await favouriteMutation.mutateAsync({ objectId }));
   };
 
-  const handleCollection = () => {
-    setCollection(!collection);
-  };
-
   const handleChangeTag = (tagId: string) => {
     setCheckedTags((prevState) => ({
       ...prevState,
@@ -143,84 +140,65 @@ export default function ObjectMenu({
     });
   };
 
-  const handleCreate = async () => {
-    if (!newTagName.trim()) return;
+  const handleCreate = async (tagName: string, tagColor: string) => {
+    if (!tagName.trim()) return;
 
     await createCollectionMutation.mutateAsync({
       objectId,
-      tagName: newTagName,
+      tagName,
       tagColor,
     });
 
     setView("collection");
   };
 
-  const handleCreateView = () => {
-    setView("create");
-  };
-
-  const handleSetView = (view: ViewType) => {
-    setView(view);
-  };
-
-  const handleSetTagColor = (color: string) => {
-    setTagColor(color);
-  };
-
   return (
-    <>
-      {userId === uploaderId ? (
-        <div>
-          <div>
-            <ProfilePicture imageUrl={profilePic} />
-            <h2>{objectName}</h2>
-          </div>
-          <h2>{tagName}</h2>
-          <div className="flex gap-3">
-            <div className="h-6 w-6">
-              <Download
-                className="h-5 w-5 cursor-pointer"
-                onClick={() => handleDownload()}
-              />
-            </div>
-            <div
-              onClick={() => handleFavourite()}
-              className={cn(
-                "flex h-6 w-6 cursor-pointer items-center justify-center rounded-full",
-                {
-                  "bg-[#FFB900]": favourite,
-                },
-              )}
-            >
-              <Star className="h-5 w-5 cursor-pointer" />
-            </div>
-            <div onClick={() => handleCollection()} className="h-6 w-6 ">
-              <Bookmark className="h-5 w-5 cursor-pointer" />
-            </div>
-          </div>
-          {collection && (
-            <Portal>
-              <CollectionMenu
-                usedTags={collectionsData?.usedTags ?? []}
-                checkedTags={checkedTags}
-                view={view}
-                tagColor={tagColor}
-                newTagName={newTagName}
-                handleCreate={handleCreate}
-                handleSetTagColor={handleSetTagColor}
-                handleSetView={handleSetView}
-                handleChangeTag={handleChangeTag}
-                handleAdd={handleAdd}
-                handleCreateView={handleCreateView}
-                onClose={handleCollection}
-              />
-            </Portal>
-          )}
+    <section className="w-full">
+      <div className="flex max-h-fit w-full flex-row items-center justify-around gap-2">
+        <div className="flex flex-row items-center gap-2">
+          <ProfilePicture imageUrl={profilePic} />
+          <h2>{objectName}</h2>
         </div>
-      ) : (
-        <div></div>
-      )}
-    </>
+        <h2>{tagName}</h2>
+        <div className="flex items-center gap-3">
+          <div className="h-6 w-6">
+            <Download
+              className="h-5 w-5 cursor-pointer"
+              onClick={() => handleDownload()}
+            />
+          </div>
+          <div
+            onClick={() => handleFavourite()}
+            className={cn(
+              "flex h-6 w-6 cursor-pointer items-center justify-center rounded-full",
+              {
+                "bg-[#FFB900]": favourite,
+              },
+            )}
+          >
+            <Star className="h-5 w-5 cursor-pointer" />
+          </div>
+          <div onClick={() => setCollection(!collection)} className="h-6 w-6 ">
+            <Bookmark className="h-5 w-5 cursor-pointer" />
+          </div>
+        </div>
+        {collection && (
+          <Portal>
+            <CollectionMenu
+              usedTags={collectionsData?.usedTags ?? []}
+              checkedTags={checkedTags}
+              view={view}
+              handleChangeTag={handleChangeTag}
+              handleAdd={handleAdd}
+              handleCreateView={() => setView("create")}
+              handleCollectionView={() => setView("collection")}
+              handleCreate={handleCreate}
+              onClose={() => setCollection(!collection)}
+            />
+          </Portal>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -233,14 +211,11 @@ type CollectionMenuProps = {
   usedTags: CollectionTags[];
   checkedTags: Record<string, boolean>;
   view: ViewType;
-  tagColor: string;
-  newTagName: string;
-  handleCreate: () => void;
-  handleSetTagColor: (color: string) => void;
-  handleSetView: (view: ViewType) => void;
   handleChangeTag: (tagId: string) => void;
   handleAdd: () => void;
   handleCreateView: () => void;
+  handleCollectionView: () => void;
+  handleCreate: (tagName: string, tagColor: string) => void;
   onClose: () => void;
 };
 
@@ -248,24 +223,24 @@ function CollectionMenu({
   usedTags,
   checkedTags,
   view,
-  tagColor,
-  newTagName,
-  handleCreate,
-  handleSetTagColor,
-  handleSetView,
   handleChangeTag,
   handleAdd,
   handleCreateView,
+  handleCollectionView,
+  handleCreate,
   onClose,
 }: CollectionMenuProps) {
+  const [newTagName, setNewTagName] = useState("");
+  const [tagColor, setTagColor] = useState("#000000");
+
   return (
     <div className="fixed inset-0 flex items-center justify-center">
-      <div className="absolute z-50 h-screen w-screen bg-[rgba(14,20,36,0.6)] backdrop-blur-sm"></div>
-
       <div
-        className="relative z-50 max-h-[80vh] w-full max-w-md overflow-y-auto rounded-md bg-secondary p-4 shadow-xl"
+        className="absolute z-50 h-screen w-screen bg-[rgba(14,20,36,0.6)] backdrop-blur-sm"
         onClick={onClose}
-      >
+      ></div>
+
+      <div className="relative z-50 max-h-[80vh] w-full max-w-md overflow-y-auto rounded-md bg-secondary p-4 shadow-xl">
         <div onClick={(e) => e.stopPropagation()}>
           <div className="mb-4 flex items-center gap-2 border-b pb-2">
             <Bookmark className="h-4 w-4" />
@@ -278,16 +253,16 @@ function CollectionMenu({
               checkedTags={checkedTags}
               handleChangeTag={handleChangeTag}
               handleAdd={handleAdd}
-              handleCreate={handleCreate}
+              handleCreateView={handleCreateView}
             />
           )}
           {view === "create" && (
-            <div className="relative flex w-2/6 flex-col items-center justify-center gap-10">
+            <div className="relative flex flex-col items-center justify-center gap-10">
               <input
                 type="text"
                 placeholder="Enter tag name"
                 value={newTagName}
-                onChange={(e) => handleChangeTag(e.target.value)}
+                onChange={(e) => setNewTagName(e.target.value)}
                 className="w-3/4 border-b bg-inherit text-xl outline-none"
               />
 
@@ -299,7 +274,7 @@ function CollectionMenu({
                   type="color"
                   id="colorPicker"
                   value={tagColor}
-                  onChange={(e) => handleSetTagColor(e.target.value)}
+                  onChange={(e) => setTagColor(e.target.value)}
                   className="h-6 w-6 cursor-pointer rounded-full border"
                 />
                 <span className="text-sm">{tagColor}</span>
@@ -307,13 +282,13 @@ function CollectionMenu({
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleSetView("collection")}
+                  onClick={() => handleCollectionView()}
                   className="rounded-full bg-primary px-4 py-1 text-secondary hover:bg-primary"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleCreate}
+                  onClick={() => handleCreate(newTagName, tagColor)}
                   className="flex items-center gap-1 rounded-md border px-4 py-1"
                 >
                   Create

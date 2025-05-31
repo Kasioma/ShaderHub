@@ -96,4 +96,36 @@ export const libraryRouter = createTRPCRouter({
         });
       }
     }),
+  deleteObject: publicProcedure
+    .input(
+      z.object({
+        objectId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const userId = await isSignedIn();
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be signed in to use this route.",
+        });
+      }
+      try {
+        const parsedUserId = z.string().parse(userId);
+        await db
+          .delete(objectTable)
+          .where(
+            and(
+              eq(objectTable.id, input.objectId),
+              eq(objectTable.userId, parsedUserId),
+            ),
+          );
+        return true;
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Delete could not be performed.",
+        });
+      }
+    }),
 });

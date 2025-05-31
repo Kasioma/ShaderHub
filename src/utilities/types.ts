@@ -55,3 +55,11 @@ export type SelectedFileProps = {
   objectId: string;
   objectName: string;
 };
+
+export const confirmationType = Object.freeze({
+  delete: "delete",
+  save: "save",
+} as const);
+
+export type ConfirmationType =
+  (typeof confirmationType)[keyof typeof confirmationType];

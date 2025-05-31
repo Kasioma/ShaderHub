@@ -9,6 +9,7 @@ import {
   objectTagRelationTable,
   attributeValueTable,
   attributeValueObjectRelationTable,
+  collectionsTable,
 } from "@/server/db/schema";
 import { eq, or, and, ne } from "drizzle-orm";
 import { z } from "zod";
@@ -32,7 +33,6 @@ export const uploadRouter = createTRPCRouter({
       });
     }
     try {
-      const parsedUserId = z.string().parse(userId);
       const tagsAndAttributes = await db
         .select({
           tag: tagTable,
@@ -49,11 +49,9 @@ export const uploadRouter = createTRPCRouter({
         )
         .where(
           and(
-            or(
-              eq(tagTable.userId, parsedUserId),
-              eq(tagTable.visibility, "public"),
-            ),
+            or(eq(tagTable.visibility, "public")),
             ne(tagTable.name, "Favourite"),
+            ne(tagTable.name, "Uploaded"),
           ),
         );
       if (!tagsAndAttributes)
@@ -130,6 +128,12 @@ export const uploadRouter = createTRPCRouter({
             name: input.name,
             userId: parsedUserId,
             createdAt: Math.floor(Date.now() / 1000),
+          });
+
+          await tx.insert(collectionsTable).values({
+            objectId: objectId,
+            userId: parsedUserId,
+            tagId: "tag-6",
           });
 
           await tx.insert(objectTagRelationTable).values(tagRows);

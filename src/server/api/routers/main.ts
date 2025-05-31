@@ -471,6 +471,11 @@ export const mainRouter = createTRPCRouter({
           message: "You must be signed in to use this route.",
         });
       }
+      if (input.tagName === "Uploaded")
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You cannot create an Uploaded tag.",
+        });
       try {
         const parsedUserId = z.string().parse(userId);
         const tag = await db

@@ -103,14 +103,18 @@ app.delete("/picture/:id", async (c) => {
 });
 
 app.delete("/object/:id", async (c) => {
-  const fileId = c.req.param("id");
-  const filePath = path.join(STATIC_PATH_OBJECTS, fileId);
+  const id = c.req.param("id");
+  const filePath = path.join(STATIC_PATH_OBJECTS, id);
+  const thumbnailPath = path.join(STATIC_PATH_THUMBNAILS, id);
 
-  if (!fs.existsSync(filePath)) return c.json({ error: "Not found" }, 404);
+  try {
+    fs.unlinkSync(filePath);
+    fs.unlinkSync(thumbnailPath);
+  } catch {
+    return c.json({ error: "Failed to delete object" }, 500);
+  }
 
-  fs.unlinkSync(filePath);
-
-  return c.body("", 200);
+  return c.json({ success: true }, 200);
 });
 
 app.post("/thumbnails", async (c) => {

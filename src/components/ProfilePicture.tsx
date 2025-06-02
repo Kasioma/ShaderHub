@@ -3,9 +3,15 @@ import Image from "next/image";
 
 type ProfilePictureProps = {
   imageUrl: string | null;
+  width?: number;
+  height?: number;
 };
 
-export const ProfilePicture = ({ imageUrl }: ProfilePictureProps) => {
+export const ProfilePicture = ({
+  imageUrl,
+  width,
+  height,
+}: ProfilePictureProps) => {
   if (!imageUrl) {
     return <CircleUserRound className="h-[40px] w-[40px]" />;
   }
@@ -14,8 +20,8 @@ export const ProfilePicture = ({ imageUrl }: ProfilePictureProps) => {
     <Image
       src={imageUrl}
       alt="Profile Picture"
-      width={40}
-      height={40}
+      width={width ?? 40}
+      height={height ?? 40}
       className="rounded-full"
     />
   );

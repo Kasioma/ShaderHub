@@ -51,7 +51,6 @@ export const mainRouter = createTRPCRouter({
       const cursor = input.cursor;
       const direction = input.direction;
       const querySplit = input.query?.split(" ") ?? [];
-      console.log(querySplit);
 
       const query = await db
         .select({

@@ -75,9 +75,19 @@ const ProfilePicture = ({ user }: Props) => {
 const Profile = ({ user }: Props) => {
   return (
     <div className="border-primary-50 absolute right-[1%] top-[8%] z-50 mt-2 flex w-1/4 max-w-[300px] flex-col rounded-md border bg-background">
-      <Link href="" className="hover:bg-background-600 w-full rounded-t-md p-2">
-        Profile
-      </Link>
+      {user ? (
+        <Link
+          href={`/profile/${user.id}`}
+          className="hover:bg-background-600 w-full rounded-t-md p-2"
+        >
+          Profile
+        </Link>
+      ) : (
+        <span className="text-muted-foreground w-full cursor-not-allowed rounded-t-md p-2">
+          Profile
+        </span>
+      )}
+
       <Link href="/library" className="hover:bg-background-600 w-full p-2">
         Library
       </Link>

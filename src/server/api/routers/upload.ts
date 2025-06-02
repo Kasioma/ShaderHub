@@ -146,8 +146,6 @@ export const uploadRouter = createTRPCRouter({
         });
         return objectId;
       } catch (err) {
-        console.error("Error during object mutation:", err);
-
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Mutation failed: ${err instanceof Error ? err.message : "Unknown error"}`,

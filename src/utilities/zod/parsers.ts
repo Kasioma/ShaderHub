@@ -66,3 +66,9 @@ export const filePullSchema = z.record(
 );
 
 export type FilePull = z.infer<typeof filePullSchema>;
+
+export const credentialChangeSchema = z.object({
+  username: z.string(),
+});
+
+export type CredentialChange = z.infer<typeof credentialChangeSchema>;

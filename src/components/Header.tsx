@@ -12,17 +12,26 @@ type User = {
   image: string;
 } | null;
 
-type Props = {
+type ProfileProps = {
   user: User;
 };
 
-export default function Header({ user }: Props) {
+type ProfileModalProps = {
+  user: User;
+  handleCloseModal: () => void;
+};
+
+export default function Header({ user }: ProfileProps) {
   const [showProfile, setShowProfile] = useState(false);
 
   return (
     <header className="sticky left-0 top-0 bg-background text-text">
       <div className="mx-auto flex items-center justify-between gap-2 p-3">
-        <Link href="/" className="flex items-center gap-2">
+        <Link
+          href="/"
+          className="flex items-center gap-2"
+          onClick={() => setShowProfile(false)}
+        >
           <Image
             src="/logoDark.png"
             alt="Logo"
@@ -37,6 +46,7 @@ export default function Header({ user }: Props) {
           <Link
             href="/upload"
             className="flex items-center gap-2 rounded-md px-2 py-1 hover:cursor-pointer"
+            onClick={() => setShowProfile(false)}
           >
             <Upload />
             <span>Upload</span>
@@ -50,7 +60,10 @@ export default function Header({ user }: Props) {
           </div>
           {showProfile && (
             <Portal>
-              <Profile user={user} />
+              <Profile
+                user={user}
+                handleCloseModal={() => setShowProfile(false)}
+              />
             </Portal>
           )}
         </div>
@@ -59,7 +72,7 @@ export default function Header({ user }: Props) {
   );
 }
 
-const ProfilePicture = ({ user }: Props) => {
+const ProfilePicture = ({ user }: ProfileProps) => {
   if (user === null) return <CircleUserRound className="h-[40px] w-[40px]" />;
   return (
     <Image
@@ -72,13 +85,14 @@ const ProfilePicture = ({ user }: Props) => {
   );
 };
 
-const Profile = ({ user }: Props) => {
+const Profile = ({ user, handleCloseModal }: ProfileModalProps) => {
   return (
     <div className="border-primary-50 absolute right-[1%] top-[8%] z-50 mt-2 flex w-1/4 max-w-[300px] flex-col rounded-md border bg-background">
       {user ? (
         <Link
           href={`/profile/${user.id}`}
           className="hover:bg-background-600 w-full rounded-t-md p-2"
+          onClick={() => handleCloseModal()}
         >
           Profile
         </Link>
@@ -88,11 +102,12 @@ const Profile = ({ user }: Props) => {
         </span>
       )}
 
-      <Link href="/library" className="hover:bg-background-600 w-full p-2">
+      <Link
+        href="/library"
+        className="hover:bg-background-600 w-full p-2"
+        onClick={() => handleCloseModal()}
+      >
         Library
-      </Link>
-      <Link href="" className="hover:bg-background-600 w-full p-2">
-        Settings
       </Link>
       {user ? (
         <SignOutButton>

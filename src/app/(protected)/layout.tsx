@@ -9,6 +9,7 @@ type Props = {
 type User = {
   id: string;
   image: string;
+  roles: string[];
 } | null;
 
 export default async function layout({ children }: Props) {
@@ -21,6 +22,7 @@ export default async function layout({ children }: Props) {
       return {
         id: sessionClaims.id as string,
         image: sessionClaims.image as string,
+        roles: sessionClaims.roles as string[],
       };
     return null;
   };

@@ -5,7 +5,7 @@ import { ProfilePicture } from "@/components/ProfilePicture";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/utilities/trpc";
-import { BarChart3, Cog, Folder, Star } from "lucide-react";
+import { BarChart3, Folder, Star } from "lucide-react";
 import { cn } from "@/utilities/utils";
 import LoginModal from "@/components/LoginModal";
 import { Portal } from "@/components/Portal";

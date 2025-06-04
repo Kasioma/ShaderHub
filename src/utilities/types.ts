@@ -54,6 +54,7 @@ export type SelectedFileProps = {
   uploaderId: string;
   objectId: string;
   objectName: string;
+  visibility: Visibility;
 };
 
 export const confirmationType = Object.freeze({
@@ -63,3 +64,11 @@ export const confirmationType = Object.freeze({
 
 export type ConfirmationType =
   (typeof confirmationType)[keyof typeof confirmationType];
+
+export const requestType = Object.freeze({
+  accepted: "accepted",
+  rejected: "rejected",
+  pending: "pending",
+} as const);
+
+export type RequestType = (typeof requestType)[keyof typeof requestType];

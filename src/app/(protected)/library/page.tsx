@@ -9,6 +9,7 @@ import type {
   ConfirmationType,
   ParsedModelProps,
   SelectedFileProps,
+  Visibility,
 } from "@/utilities/types";
 import { cn, unzipFiles } from "@/utilities/utils";
 import type { FilePull } from "@/utilities/zod/parsers";
@@ -24,6 +25,8 @@ export default function Page() {
   const [parsedObject, setParsedObject] = useState<ParsedModelProps | null>(
     null,
   );
+  const [selectedVisibility, setSelectedVisibility] =
+    useState<Visibility>("public");
   const queryClient = useQueryClient();
   const { data } = useQuery(trpc.library.getLibrary.queryOptions());
 
@@ -44,6 +47,10 @@ export default function Page() {
     trpc.library.deleteObject.mutationOptions(mutationOptions),
   );
 
+  const visibilityMutation = useMutation(
+    trpc.library.updateVisibility.mutationOptions(mutationOptions),
+  );
+
   const handleSelectedFile = (selectedFile: SelectedFileProps) => {
     setIsSelected(selectedFile);
   };
@@ -54,6 +61,7 @@ export default function Page() {
       if (!isSelected.objectId) return;
       const newZip = await fetchZip(isSelected.objectId);
       if (!newZip) return;
+      setSelectedVisibility(isSelected.visibility);
       setZip(newZip);
     };
     newZip().catch(console.error);
@@ -109,8 +117,30 @@ export default function Page() {
   };
 
   const handleSave = async () => {
-    if (!zip) return;
-    return;
+    if (!zip || !selectedVisibility || isSelected === null) return;
+    const response = await visibilityMutation.mutateAsync({
+      objectId: isSelected.objectId,
+      visibility: selectedVisibility,
+    });
+    if (!response)
+      return toast({
+        variant: "destructive",
+        title: "Server error",
+        description: "Something went wrong",
+      });
+    if (response.result === "success") {
+      toast({
+        variant: "default",
+        title: "Success",
+        description: `${response.message}`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Server error",
+        description: `${response.message}`,
+      });
+    }
   };
 
   const clear = async () => {
@@ -142,6 +172,7 @@ export default function Page() {
         handleSelectedFile={handleSelectedFile}
         handleDelete={handleDelete}
         handleSave={handleSave}
+        setSelectedVisibility={setSelectedVisibility}
       />
       <main className="flex w-4/5 flex-col items-center justify-start text-center">
         <ObjectMenu
@@ -175,6 +206,7 @@ type FileListProps = {
   selectedFile: SelectedFileProps | null;
   handleDelete: () => void;
   handleSave: () => void;
+  setSelectedVisibility: (visibility: Visibility) => void;
   handleSelectedFile: (selectedFile: SelectedFileProps) => void;
 };
 
@@ -183,6 +215,7 @@ function FileList({
   handleSelectedFile,
   selectedFile,
   handleDelete,
+  setSelectedVisibility,
   handleSave,
 }: FileListProps) {
   const [confirmationType, setConfirmationType] =
@@ -225,7 +258,10 @@ function FileList({
               <div className="flex items-center justify-center gap-2">
                 <label className="block">Visibility</label>
                 <select
-                  defaultValue={"public"}
+                  defaultValue={selectedFile.visibility}
+                  onChange={(e) =>
+                    setSelectedVisibility(e.target.value as Visibility)
+                  }
                   className="w-full rounded-md border bg-secondary px-2 py-1 text-sm"
                 >
                   <option value="public">Public</option>
@@ -272,6 +308,7 @@ type FolderProps = {
     objectName: string;
     userId: string;
     uploaderId: string;
+    visibility: Visibility;
   }[];
   selectedFile: SelectedFileProps | null;
   handleSelectedFile: (selectedFile: SelectedFileProps) => void;
@@ -310,438 +347,7 @@ function Folder({
                   uploaderId: obj.uploaderId,
                   objectId: obj.objectId,
                   objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
-                })
-              }
-            >
-              <span className="select-none text-text opacity-50">|</span>
-              📄
-              <span
-                className={cn("text-text", {
-                  "text-primary":
-                    `${selectedFile?.tagName}|${selectedFile?.objectId}` ===
-                    `${title}|${obj.objectId}`,
-                })}
-              >
-                {obj.objectName}
-              </span>
-            </li>
-          ))}
-          {objects.map((obj) => (
-            <li
-              key={obj.objectId}
-              className="cursor-pointer text-text hover:text-primary"
-              onClick={() =>
-                handleSelectedFile({
-                  tagName: title,
-                  userId: obj.userId,
-                  uploaderId: obj.uploaderId,
-                  objectId: obj.objectId,
-                  objectName: obj.objectName,
+                  visibility: obj.visibility,
                 })
               }
             >

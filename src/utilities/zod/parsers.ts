@@ -60,6 +60,7 @@ export const filePullSchema = z.record(
         objectName: z.string(),
         userId: z.string(),
         uploaderId: z.string(),
+        visibility: z.enum(["public", "private"]),
       }),
     ),
   }),

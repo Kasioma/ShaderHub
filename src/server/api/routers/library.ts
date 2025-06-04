@@ -1,11 +1,18 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { collectionsTable, objectTable, tagTable } from "@/server/db/schema";
+import {
+  collectionsTable,
+  objectTable,
+  requestTable,
+  tagTable,
+} from "@/server/db/schema";
 import { eq, and } from "drizzle-orm";
 import type { FilePull } from "@/utilities/zod/parsers";
+import { nanoid } from "nanoid";
+import { visibility } from "@/utilities/types";
 
 export async function isSignedIn() {
   const { sessionClaims } = await auth();
@@ -32,6 +39,7 @@ export const libraryRouter = createTRPCRouter({
           objectName: objectTable.name,
           userId: objectTable.userId,
           uploaderId: objectTable.userId,
+          visibility: objectTable.visibility,
         })
         .from(collectionsTable)
         .leftJoin(tagTable, eq(collectionsTable.tagId, tagTable.id))
@@ -48,6 +56,7 @@ export const libraryRouter = createTRPCRouter({
           objectName: row.objectName ?? "",
           userId: row.userId ?? "",
           uploaderId: row.userId ?? "",
+          visibility: row.visibility ?? "private",
         });
         return acc;
       }, {} as FilePull);
@@ -121,6 +130,88 @@ export const libraryRouter = createTRPCRouter({
             ),
           );
         return true;
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Delete could not be performed.",
+        });
+      }
+    }),
+  updateVisibility: publicProcedure
+    .input(
+      z.object({
+        objectId: z.string(),
+        visibility: z.enum(["public", "private"]),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const userId = await isSignedIn();
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be signed in to use this route.",
+        });
+      }
+      try {
+        const parsedUserId = z.string().parse(userId);
+        const currentRequest = await db.query.requestTable.findFirst({
+          where: and(
+            eq(requestTable.userId, parsedUserId),
+            eq(requestTable.objectId, input.objectId),
+          ),
+        });
+        const object = await db.query.objectTable.findFirst({
+          where: eq(objectTable.id, input.objectId),
+        });
+
+        if (input.visibility === "private") {
+          await db
+            .update(objectTable)
+            .set({ visibility: "public" })
+            .where(eq(objectTable.id, input.objectId));
+          return {
+            result: "success",
+            message: "Successfully updated visibility.",
+          };
+        }
+        
+        if (!currentRequest && object) {
+          if (input.visibility === object.visibility)
+            return {
+              result: "success",
+              message: "Visibility already set to same value.",
+            };
+          await db.insert(requestTable).values({
+            id: nanoid(15),
+            userId: parsedUserId,
+            objectId: input.objectId,
+            createdAt: Math.floor(Date.now() / 1000),
+          });
+          return {
+            result: "success",
+            message: "Successfully requested publicity.",
+          };
+        }
+        if (currentRequest && currentRequest.status === "pending")
+          return {
+            result: "fail",
+            message: "Request already pending.",
+          };
+        if (currentRequest && currentRequest.status === "rejected")
+          return {
+            result: "fail",
+            message: "Request already denied.",
+          };
+        if (currentRequest && currentRequest.status === "accepted") {
+          await db
+            .update(objectTable)
+            .set({ visibility: "public" })
+            .where(eq(objectTable.id, input.objectId));
+          return {
+            result: "success",
+            message: "Visibility updated successfully.",
+          };
+        }
       } catch {
         throw new TRPCError({
           code: "BAD_REQUEST",

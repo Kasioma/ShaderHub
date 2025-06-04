@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 type Props = {
   children: React.ReactNode;
@@ -12,6 +13,11 @@ type User = {
 } | null;
 
 export default async function layout({ children }: Props) {
+  const { sessionClaims } = await auth();
+  if (!sessionClaims) return redirect("/");
+  if ((sessionClaims.roles as string[]).includes("admin") === false)
+    return redirect("/");
+
   const getUserData = async (): Promise<User> => {
     const { sessionClaims } = await auth();
     if (sessionClaims)
@@ -24,9 +30,11 @@ export default async function layout({ children }: Props) {
   };
 
   return (
-    <div>
-      <Header user={await getUserData()}></Header>
-      <div>{children}</div>
+    <div className="grid h-screen grid-rows-[auto_1fr]">
+      <div>
+        <Header user={await getUserData()}></Header>
+      </div>
+      <div className="min-h-0 overflow-auto">{children}</div>
     </div>
   );
 }

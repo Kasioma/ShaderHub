@@ -1,6 +1,6 @@
 import { type InferSelectModel } from "drizzle-orm";
 import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
-import { type Visibility } from "@/utilities/types";
+import { type RequestType, type Visibility } from "@/utilities/types";
 
 export const userTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -157,3 +157,15 @@ export const collectionsTable = pgTable(
     primaryKey({ columns: [table.objectId, table.tagId, table.userId] }),
   ],
 );
+
+export const requestTable = pgTable("requests", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }),
+  objectId: text("object_id")
+    .notNull()
+    .references(() => objectTable.id, { onDelete: "cascade" }),
+  status: text("status").notNull().$type<RequestType>().default("pending"),
+  createdAt: integer("created_at").notNull(),
+});

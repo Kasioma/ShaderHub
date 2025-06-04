@@ -10,6 +10,7 @@ import { useState } from "react";
 type User = {
   id: string;
   image: string;
+  roles: string[];
 } | null;
 
 type ProfileProps = {
@@ -51,10 +52,15 @@ export default function Header({ user }: ProfileProps) {
             <Upload />
             <span>Upload</span>
           </Link>
-          <div className="flex items-center gap-2 rounded-md px-2 py-1 hover:cursor-pointer">
-            <Box />
-            <span>Build</span>
-          </div>
+          {user?.roles.includes("admin") === true && (
+            <Link
+              href="/requests"
+              className="flex items-center gap-2 rounded-md px-2 py-1 hover:cursor-pointer"
+            >
+              <Box />
+              <span>Requests</span>
+            </Link>
+          )}
           <div onClick={() => setShowProfile(!showProfile)}>
             <ProfilePicture user={user} />
           </div>

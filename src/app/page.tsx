@@ -8,6 +8,7 @@ import TagRow from "@/components/TagRow";
 type User = {
   id: string;
   image: string;
+  roles: string[];
 } | null;
 
 export default async function Home() {
@@ -17,6 +18,7 @@ export default async function Home() {
       return {
         id: sessionClaims.id as string,
         image: sessionClaims.image as string,
+        roles: sessionClaims.roles as string[],
       };
     return null;
   };

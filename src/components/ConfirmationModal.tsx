@@ -54,7 +54,10 @@ export default function ConfirmationModal({
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleSave()}
+                  onClick={() => {
+                    handleSave();
+                    onClose();
+                  }}
                   className="rounded-full bg-primary px-4 py-1 text-secondary hover:bg-primary"
                 >
                   Save

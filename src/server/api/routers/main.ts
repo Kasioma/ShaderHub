@@ -25,6 +25,7 @@ import {
   ilike,
   inArray,
   ne,
+  sql,
 } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
@@ -59,6 +60,7 @@ export const mainRouter = createTRPCRouter({
           userId: objectTable.userId,
           createdAt: objectTable.createdAt,
           username: userTable.username,
+          views: objectTable.views,
         })
         .from(objectTable)
         .innerJoin(userTable, eq(objectTable.userId, userTable.id))
@@ -194,6 +196,13 @@ export const mainRouter = createTRPCRouter({
               eq(collectionsTable.tagId, favouriteTagId),
             ),
           );
+
+        await db
+          .update(objectTable)
+          .set({
+            views: sql`${objectTable.views} + 1`,
+          })
+          .where(eq(objectTable.id, input.objectId));
 
         return { tags, attributes, favourite: toggleCheck.length > 0 };
       } catch {

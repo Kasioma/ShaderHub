@@ -1,5 +1,5 @@
 import { cn, downloadZip } from "@/utilities/utils";
-import { Download } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import ModelModal from "./ModelModal";
@@ -11,6 +11,7 @@ type Props = {
   thumbnailUrl: string;
   thumbnailTitle: string;
   username: string;
+  views: number;
   userId: string;
 };
 
@@ -19,6 +20,7 @@ export default function ObjectArticle({
   thumbnailUrl,
   thumbnailTitle,
   username,
+  views,
   userId,
 }: Props) {
   const [zip, setZip] = useState<Blob | null>(null);
@@ -75,8 +77,14 @@ export default function ObjectArticle({
         />
       </div>
       <div className="flex justify-around p-2 text-sm text-text">
-        <h2>{username}</h2>
-        <h2>{thumbnailTitle}</h2>
+        <div className="flex flex-row gap-1">
+          <h2>{username} - </h2>
+          <h2>{thumbnailTitle}</h2>
+        </div>
+        <div className="flex flex-row items-center justify-center gap-1">
+          <h2>{views}</h2>
+          <Eye className="h-4 w-4" />
+        </div>
       </div>
       {zip && !modal && (
         <ModelModal

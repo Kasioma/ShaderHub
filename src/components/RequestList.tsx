@@ -112,7 +112,6 @@ export default function RequestList({ data, refetch }: RequestTypeProps) {
   };
 
   const handleRequest = async (reqStatus: RequestType) => {
-    console.log(reqStatus, selectedRequest, isSelected);
     if (!selectedRequest || !isSelected) return;
     const status = await setStatusMutation.mutateAsync({
       id: selectedRequest,
@@ -133,7 +132,6 @@ export default function RequestList({ data, refetch }: RequestTypeProps) {
       });
   };
 
-  console.log(isSelected);
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 text-text">
       {data.length === 0 ? (

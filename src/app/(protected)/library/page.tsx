@@ -16,6 +16,7 @@ import type { FilePull } from "@/utilities/zod/parsers";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Boxes, ScanLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export default function Page() {
@@ -27,6 +28,7 @@ export default function Page() {
   );
   const [selectedVisibility, setSelectedVisibility] =
     useState<Visibility>("public");
+  const [wireframe, setWireframe] = useState(false);
   const queryClient = useQueryClient();
   const { data } = useQuery(trpc.library.getLibrary.queryOptions());
 
@@ -160,9 +162,10 @@ export default function Page() {
           parsedObject.kind === "gltf" ? parsedObject.fileBinary : new Blob([]),
         )}
         fileTextures={handleTextures(parsedObject.fileTextures)}
+        wireframe={wireframe}
       />
     );
-  }, [parsedObject]);
+  }, [parsedObject, wireframe]);
 
   return (
     <section className="flex h-full">
@@ -186,7 +189,13 @@ export default function Page() {
           refetchLibrary={refetchLibrary}
         />
         {parsedObject && (
-          <div className="h-full w-full p-2">
+          <div className="relative h-full w-full p-2">
+            <button
+              className="absolute right-2 top-2 z-50 h-5 w-5 cursor-pointer text-text"
+              onClick={() => setWireframe(!wireframe)}
+            >
+              {wireframe ? <Boxes /> : <ScanLine />}
+            </button>
             <Canvas className="h-full w-full ">
               <directionalLight position={[5, 5, 5]} intensity={1} />
               <ambientLight intensity={0.5} />

@@ -18,6 +18,7 @@ type ObjectType = {
   userId: string;
   createdAt: number;
   username: string;
+  views: number;
 };
 
 type ThumbnailObject = {
@@ -165,6 +166,7 @@ function Objects({ objects, thumbnails }: ObjectsProps) {
                 thumbnailTitle={matchingObject?.name ?? "Untitled"}
                 username={matchingObject?.username ?? "Unknown"}
                 userId={matchingObject?.userId ?? "Unknown"}
+                views={matchingObject?.views ?? 0}
               />
             );
           })}

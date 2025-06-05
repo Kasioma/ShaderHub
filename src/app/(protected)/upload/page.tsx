@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { CircleX, File, Search, Tag } from "lucide-react";
+import { CircleX, File, Search, Tag, Boxes, ScanLine } from "lucide-react";
 import PreviewModel from "@/components/PreviewModel";
 import type { SupportedLoaders } from "@/utilities/types";
 import { useModal } from "@/context/searchProvider";
@@ -84,8 +84,8 @@ export default function Page() {
     };
   }, [loadedFile, binary, textures]);
 
-  const MemoizedModel = useMemo(
-    () => (
+  const MemoizedModel = useMemo(() => {
+    return (
       <PreviewModel
         fileType={fileType}
         fileUrl={loadedFile}
@@ -93,9 +93,8 @@ export default function Page() {
         fileTextures={textures}
         onLoaded={() => setModelLoaded(true)}
       />
-    ),
-    [loadedFile, binary, textures, fileType],
-  );
+    );
+  }, [loadedFile, binary, textures, fileType]);
 
   const handleSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = e.target.files;

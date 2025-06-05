@@ -3,7 +3,15 @@ import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import PreviewModel from "./PreviewModel";
 import { useObjectModal } from "@/context/objectProvider";
-import { Bookmark, Download, Star, Tag, X } from "lucide-react";
+import {
+  Bookmark,
+  Download,
+  Star,
+  Tag,
+  X,
+  Boxes,
+  ScanLine,
+} from "lucide-react";
 import { cn, downloadZip, unzipFiles } from "@/utilities/utils";
 import type { ParsedModelProps, ViewType } from "@/utilities/types";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -43,6 +51,7 @@ export default function ModelModal({
   >({});
   const [checkedTags, setCheckedTags] = useState<Record<string, boolean>>({});
   const [view, setView] = useState<ViewType>("details");
+  const [wireframe, setWireframe] = useState(false);
   const { data: objectData } = useQuery(
     trpc.main.getObjectInformation.queryOptions({ objectId: objectId }),
   );
@@ -136,10 +145,11 @@ export default function ModelModal({
         fileBinary={URL.createObjectURL(
           parsedObject.kind === "gltf" ? parsedObject.fileBinary : new Blob([]),
         )}
+        wireframe={wireframe}
         fileTextures={handleTextures(parsedObject.fileTextures)}
       />
     );
-  }, [parsedObject]);
+  }, [parsedObject, wireframe]);
 
   const handleDownload = () => {
     if (!modelBlob) return;
@@ -203,6 +213,12 @@ export default function ModelModal({
         <div className="flex w-4/6 flex-col gap-1 text-xl text-primary">
           {parsedObject && (
             <div className="relative h-full">
+              <button
+                className="absolute right-2 top-2 z-50 h-5 w-5 cursor-pointer text-text"
+                onClick={() => setWireframe(!wireframe)}
+              >
+                {wireframe ? <Boxes /> : <ScanLine />}
+              </button>
               <Canvas className="h-full w-full rounded-md border-2 border-primary">
                 <directionalLight position={[5, 5, 5]} intensity={1} />
                 <ambientLight intensity={0.5} />

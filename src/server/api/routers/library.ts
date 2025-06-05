@@ -167,14 +167,14 @@ export const libraryRouter = createTRPCRouter({
         if (input.visibility === "private") {
           await db
             .update(objectTable)
-            .set({ visibility: "public" })
+            .set({ visibility: "private" })
             .where(eq(objectTable.id, input.objectId));
           return {
             result: "success",
             message: "Successfully updated visibility.",
           };
         }
-        
+
         if (!currentRequest && object) {
           if (input.visibility === object.visibility)
             return {

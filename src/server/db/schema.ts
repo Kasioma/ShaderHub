@@ -20,6 +20,8 @@ export const objectTable = pgTable("objects", {
     .notNull()
     .references(() => userTable.id, { onDelete: "cascade" }),
   createdAt: integer("created_at").notNull(),
+  views: integer("views").notNull().default(0),
+  upvote: integer("upvote").notNull().default(0),
 });
 
 export type Object = InferSelectModel<typeof objectTable>;

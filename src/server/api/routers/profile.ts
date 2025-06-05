@@ -1,11 +1,10 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
 import { db } from "@/server/db";
 import { collectionsTable, objectTable, userTable } from "@/server/db/schema";
 import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import type { CredentialChange } from "@/utilities/zod/parsers";
 
 export async function isSignedIn() {
   const { sessionClaims } = await auth();

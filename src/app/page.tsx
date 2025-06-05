@@ -34,7 +34,7 @@ export default async function Home() {
         <SignedIn>
           <Header user={user} />
         </SignedIn>
-        <TagRow userId={user?.id ?? null} />
+        <TagRow />
         <ObjectGrid />
       </main>
     </HydrateClient>

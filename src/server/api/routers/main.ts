@@ -253,35 +253,24 @@ export const mainRouter = createTRPCRouter({
         });
       }
     }),
-  getTagsInformation: publicProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-      }),
-    )
-    .query(async ({ input }) => {
-      try {
-        const tags = await db
-          .select({
-            id: tagTable.id,
-            name: tagTable.name,
-            colour: tagTable.colour,
-          })
-          .from(tagTable)
-          .where(
-            or(
-              eq(tagTable.userId, input.userId),
-              eq(tagTable.visibility, "public"),
-            ),
-          );
-        return tags;
-      } catch {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Fetch could not be performed.",
-        });
-      }
-    }),
+  getTagsInformation: publicProcedure.query(async () => {
+    try {
+      const tags = await db
+        .select({
+          id: tagTable.id,
+          name: tagTable.name,
+          colour: tagTable.colour,
+        })
+        .from(tagTable)
+        .where(or(eq(tagTable.visibility, "public")));
+      return tags;
+    } catch {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Fetch could not be performed.",
+      });
+    }
+  }),
   toggleFavouriteTag: publicProcedure
     .input(
       z.object({

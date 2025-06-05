@@ -123,3 +123,41 @@ export function downloadZip(zipBlob: Blob, filename = "model.zip") {
   a.click();
   URL.revokeObjectURL(url);
 }
+export const fetchZip = async (id: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const APIInputData = new FormData();
+  APIInputData.append("file", id);
+  const res = await fetch(`${baseUrl}/api/filestorage/object/query`, {
+    method: "POST",
+    body: APIInputData,
+  });
+
+  if (!res.ok) {
+    console.error("Error fetching object");
+    return;
+  } else {
+    const zipBlob = await res.blob();
+    if (!zipBlob) return;
+    return zipBlob;
+  }
+};
+
+export const deleteZip = async (id: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const APIInputData = new FormData();
+  APIInputData.append("file", id);
+  const res = await fetch(`${baseUrl}/api/filestorage/object/delete`, {
+    method: "DELETE",
+    body: APIInputData,
+  });
+
+  if (!res.ok) {
+    console.error("Error fetching object");
+    return false;
+  } else return true;
+};
+
+export const formatTimestamp = (timestamp: number): string => {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString();
+};

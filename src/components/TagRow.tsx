@@ -7,16 +7,14 @@ import { useRouter } from "next/navigation";
 import { useModal } from "@/context/searchProvider";
 import { cn } from "@/utilities/utils";
 
-export default function TagRow({ userId }: { userId: string | null }) {
+export default function TagRow() {
   const { modal } = useModal();
   const router = useRouter();
   const trpc = useTRPC();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
-  const { data } = useQuery(
-    trpc.main.getTagsInformation.queryOptions({ userId: userId ?? "" }),
-  );
+  const { data } = useQuery(trpc.main.getTagsInformation.queryOptions());
   const colours = ["#9a7ec8", "#c87e98", "#c87ec1", "#827ec8", "#c87e92"];
 
   const handleScroll = () => {
